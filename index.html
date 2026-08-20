@@ -3,8 +3,6 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-</head>
-<body>
 <title>Inventário SISCOMAT</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -12,26 +10,26 @@
 :root{
   --bg:#F6F7F7; --surface:#FFFFFF; --ink:#1B2529; --muted:#5C6B70;
   --line:#DDE3E4; --accent:#B3352C; --accent-ink:#FFFFFF;
-  --naval:#2F5D77; --chip-bg:#EDF0F0; --hl:#F9E8B8;
-  --sobra:#B26A00; --sobra-bg:#FCEEDB; --falta:#B3352C; --falta-bg:#F9E3E1;
+  --naval:#2F5D77; --chip-bg:#EDF0F0;
+  --ok:#2E8B57; --ok-bg:#E3F2E9; --falta:#B3352C; --falta-bg:#F9E3E1;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#141B1E; --surface:#1C2529; --ink:#E8ECED; --muted:#93A2A7;
     --line:#2C383D; --accent:#D9564B; --accent-ink:#FFFFFF;
-    --naval:#7FB0C9; --chip-bg:#242F34; --hl:#5A4A17;
-    --sobra:#E8A24B; --sobra-bg:#3A2E1C; --falta:#E06A60; --falta-bg:#3C2321;
-}
+    --naval:#7FB0C9; --chip-bg:#242F34;
+    --ok:#5FBF8A; --ok-bg:#1E3328; --falta:#E06A60; --falta-bg:#3C2321;
+  }
 }
 :root[data-theme="dark"]{
   --bg:#141B1E; --surface:#1C2529; --ink:#E8ECED; --muted:#93A2A7;
   --line:#2C383D; --accent:#D9564B; --accent-ink:#FFFFFF;
-  --naval:#7FB0C9; --chip-bg:#242F34; --hl:#5A4A17;
-  --sobra:#E8A24B; --sobra-bg:#3A2E1C; --falta:#E06A60; --falta-bg:#3C2321;
+  --naval:#7FB0C9; --chip-bg:#242F34;
+  --ok:#5FBF8A; --ok-bg:#1E3328; --falta:#E06A60; --falta-bg:#3C2321;
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 "Public Sans",system-ui,sans-serif}
-.wrap{max-width:1080px;margin:0 auto;padding:28px 20px 64px}
+.wrap{max-width:1120px;margin:0 auto;padding:28px 20px 64px}
 header{display:flex;flex-wrap:wrap;align-items:end;gap:16px 28px;border-bottom:3px solid var(--accent);padding-bottom:18px;margin-bottom:20px}
 h1{font:800 clamp(24px,4vw,34px)/1.1 Archivo,sans-serif;margin:0;text-wrap:balance}
 h1 small{display:block;font:600 12px/1.4 "Public Sans",sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
@@ -39,13 +37,18 @@ h1 small{display:block;font:600 12px/1.4 "Public Sans",sans-serif;letter-spacing
 .stat{text-align:right}
 .stat b{display:block;font:700 24px/1 Archivo,sans-serif;font-variant-numeric:tabular-nums}
 .stat span{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.tabs{display:flex;gap:4px;margin-bottom:18px;border-bottom:1px solid var(--line)}
+.tab{border:0;background:none;color:var(--muted);font:600 14px "Public Sans",sans-serif;padding:10px 16px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px}
+.tab[aria-selected=true]{color:var(--ink);border-bottom-color:var(--accent)}
+.tab:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+section[hidden]{display:none}
 .filters{position:sticky;top:0;background:var(--bg);padding:12px 0;z-index:20;display:flex;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--line);margin-bottom:4px;align-items:start}
-.combo{position:relative;flex:1;min-width:180px}
+.combo{position:relative;flex:1;min-width:170px}
 .combo-btn{width:100%;display:flex;align-items:center;gap:8px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:9px 12px;font:inherit;cursor:pointer;text-align:left}
 .combo-btn .lbl{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .combo-btn .lbl.placeholder{color:var(--muted)}
 .combo-btn .caret{color:var(--muted);font-size:11px}
-.combo-btn .clear{color:var(--muted);border:0;background:none;cursor:pointer;font:600 14px/1 sans-serif;padding:0 2px}
+.combo-btn .clear{color:var(--muted);font:600 14px/1 sans-serif;padding:0 2px}
 .combo-btn .clear:hover{color:var(--accent)}
 .combo[data-active] .combo-btn{border-color:var(--accent)}
 .combo-btn:focus-visible,.combo-panel input:focus{outline:2px solid var(--accent);outline-offset:1px}
@@ -55,125 +58,218 @@ h1 small{display:block;font:600 12px/1.4 "Public Sans",sans-serif;letter-spacing
 .combo-panel input{width:100%;border:0;border-bottom:1px solid var(--line);background:var(--surface);color:var(--ink);padding:10px 12px;font:inherit}
 .combo-list{max-height:260px;overflow-y:auto;margin:0;padding:4px;list-style:none}
 .combo-list li{padding:7px 10px;border-radius:5px;cursor:pointer;font-size:14px}
-.combo-list li:hover,.combo-list li.hi{background:var(--chip-bg)}
+.combo-list li:hover{background:var(--chip-bg)}
 .combo-list li.sel{background:var(--accent);color:var(--accent-ink)}
 .combo-list li .n{float:right;color:var(--muted);font:400 12px "IBM Plex Mono",monospace}
 .combo-list li.sel .n{color:var(--accent-ink)}
 .combo-list .none{color:var(--muted);cursor:default}
 .count{color:var(--muted);font-size:13px;margin:10px 2px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-.reset{border:1px solid var(--line);background:var(--surface);color:var(--accent);border-radius:6px;padding:4px 12px;font:600 12.5px "Public Sans",sans-serif;cursor:pointer}
+button.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:8px 14px;font:600 13px "Public Sans",sans-serif;cursor:pointer}
+button.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button.btn.small{padding:4px 10px;font-size:12px}
+button.btn.danger{color:var(--falta)}
+button.btn:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .tablewrap{overflow-x:auto}
-th{font:600 11.5px "Public Sans",sans-serif;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);text-align:left;padding:10px 14px;border-bottom:2px solid var(--line)}
-td{padding:9px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 11.5px "Public Sans",sans-serif;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);text-align:left;padding:10px 12px;border-bottom:2px solid var(--line)}
+td{padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
 tr:last-child td{border-bottom:0}
-td.q{font:500 14px "IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;text-align:right;width:1%}
+td.q{width:1%;white-space:nowrap}
+.qbox{display:inline-flex;align-items:center;gap:4px}
+.qbox b{font:500 14px "IBM Plex Mono",monospace;min-width:26px;text-align:center}
+.qbox button{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:4px;width:22px;height:22px;line-height:1;cursor:pointer;font-weight:700}
 td.pat{font:400 13px "IBM Plex Mono",monospace;color:var(--muted);white-space:nowrap}
 .badge{display:inline-block;font:600 11px "Public Sans",sans-serif;letter-spacing:.05em;background:var(--chip-bg);color:var(--naval);border-radius:4px;padding:2px 8px;white-space:nowrap}
+.chkbtn{border:0;background:none;cursor:pointer;font-size:16px;font-weight:700;padding:4px 10px;border-radius:6px}
+.chkbtn.conferido{color:var(--ok);background:var(--ok-bg)}
+.chkbtn.falta{color:var(--falta);background:var(--falta-bg)}
+.chkbtn.nao_conferido{color:var(--muted);background:var(--chip-bg)}
+td.acts{width:1%;white-space:nowrap;text-align:right}
 .empty{padding:40px;text-align:center;color:var(--muted)}
-footer{margin-top:28px;color:var(--muted);font-size:12.5px}
-@media (max-width:640px){.stats{margin-left:0}.combo{min-width:100%}}
-.tabs{display:flex;gap:4px;margin-bottom:18px;border-bottom:1px solid var(--line)}
-.tab{border:0;background:none;color:var(--muted);font:600 14px "Public Sans",sans-serif;padding:10px 16px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px}
-.tab[aria-selected=true]{color:var(--ink);border-bottom-color:var(--accent)}
-.tab:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
-section[hidden]{display:none}
-td.sobra,td.falta{font:500 14px "IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;text-align:right;width:1%;white-space:nowrap}
-td.sobra span{background:var(--sobra-bg);color:var(--sobra);border-radius:4px;padding:2px 8px;font-weight:600}
-td.falta span{background:var(--falta-bg);color:var(--falta);border-radius:4px;padding:2px 8px;font-weight:600}
 .legend{display:flex;gap:14px;margin:10px 2px;font-size:13px;color:var(--muted);flex-wrap:wrap}
-.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px;font-style:normal}
-.legend .lo i{background:var(--sobra)}
-.legend .lf i{background:var(--falta)}
-td.chk{text-align:center;width:1%}
-td.chk .ok{color:#2E8B57;font-weight:700;font-size:16px}
-:root[data-theme="dark"] td.chk .ok{color:#5FBF8A}
-td.chk .no{color:var(--falta);font-weight:700;font-size:16px}
-td.chk .na{color:var(--muted)}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) td.chk .ok{color:#5FBF8A}}
-.confnote{color:var(--muted);font-size:13px;margin:2px 2px 12px;max-width:70ch}
+footer{margin-top:28px;color:var(--muted);font-size:12.5px}
+/* modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;padding:6vh 16px;z-index:100}
+.overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--line);border-radius:10px;width:100%;max-width:460px;padding:20px}
+.modal h2{font:700 18px Archivo,sans-serif;margin:0 0 14px}
+.modal label{display:block;font:600 11.5px "Public Sans",sans-serif;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:12px 0 4px}
+.modal input,.modal select{width:100%;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:9px 12px;font:inherit}
+.modal input:focus,.modal select:focus{outline:2px solid var(--accent);outline-offset:1px}
+.modal .row{display:flex;gap:10px}
+.modal .row>*{flex:1}
+.modal .actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+/* cadastros */
+.cadgrid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.cadcard{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px}
+.cadcard h2{font:700 16px Archivo,sans-serif;margin:0 0 12px}
+.cadcard ul{list-style:none;margin:0 0 12px;padding:0}
+.cadcard li{display:flex;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px solid var(--line)}
+.cadcard li:last-child{border-bottom:0}
+.cadcard li .nm{flex:1}
+.cadcard li .cnt{color:var(--muted);font:400 12px "IBM Plex Mono",monospace}
+.addrow{display:flex;gap:8px}
+.addrow input,.addrow select{flex:1;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font:inherit}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:8px;font-size:13.5px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:200}
+#toast.show{opacity:.95}
 @media (max-width:640px){
   .wrap{padding:18px 14px 48px}
-  header{gap:12px;padding-bottom:14px;margin-bottom:14px}
-  .stats{gap:16px}
+  .stats{margin-left:0;gap:16px}
   .stat b{font-size:19px}
-  .stat span{font-size:10px}
-  .tabs{overflow-x:auto}
-  .tab{padding:9px 12px;white-space:nowrap}
   .filters{position:static}
-  /* tabela vira cartões empilhados */
+  .combo{min-width:100%}
+  .cadgrid{grid-template-columns:1fr}
   table,tbody,td{display:block;width:100%}
   thead{display:none}
   table{border:0;background:none}
   tr{display:flex;flex-direction:column;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:8px;margin-bottom:10px;padding:12px 14px}
-  td{border:0;padding:0;text-align:left}
+  td{border:0;padding:0}
   td.m{order:-1;font-weight:600;font-size:15px}
   td.m::before{display:none !important}
-  td.q,td.sobra,td.falta,td.chk{text-align:left;width:auto;white-space:normal}
   td[data-label]::before{content:attr(data-label);display:block;font:600 10px "Public Sans",sans-serif;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:1px}
-  td:empty,td.hide-empty{display:none}
-  tr .empty{border:0}
+  td.acts{text-align:left}
+  td.q{width:auto}
 }
 </style>
+</head>
+<body>
 <div class="wrap">
 <header>
   <h1><small>SISCOMAT · Controle de Materiais</small>Inventário SISCOMAT</h1>
   <div class="stats">
-    <div class="stat"><b id="stItens">0</b><span>itens</span></div>
-    <div class="stat"><b id="stQtde">0</b><span>unid. físicas</span></div>
-    <div class="stat"><b id="stUn">0</b><span>viaturas/locais</span></div>
+    <div class="stat"><b id="stItens">–</b><span>itens</span></div>
+    <div class="stat"><b id="stQtde">–</b><span>unid. físicas</span></div>
+    <div class="stat"><b id="stUn">–</b><span>unidades</span></div>
   </div>
 </header>
+
 <div class="tabs" role="tablist">
-  <button class="tab" role="tab" id="tab-inv" aria-selected="true" aria-controls="pane-inv">Inventário SISCOMAT</button>
-  <button class="tab" role="tab" id="tab-conf" aria-selected="false" aria-controls="pane-conf">Conferência</button>
+  <button class="tab" role="tab" id="tab-inv" aria-selected="true">Inventário</button>
+  <button class="tab" role="tab" id="tab-cad" aria-selected="false">Cadastros</button>
 </div>
-<section id="pane-inv" role="tabpanel" aria-labelledby="tab-inv">
-<div class="filters" id="filters"></div>
-<div class="count"><span id="count"></span><button class="reset" id="reset" hidden>Limpar filtros</button></div>
-<div class="tablewrap"><table>
-  <thead><tr><th style="text-align:right">Qtde</th><th>Material</th><th>Patrimônio</th><th>Localização</th><th>Unidade/Viatura</th><th style="text-align:center">Conferido</th></tr></thead>
-  <tbody id="tb"></tbody>
-</table></div>
+
+<section id="pane-inv" role="tabpanel">
+  <div class="filters" id="filters"></div>
+  <div class="count">
+    <span id="count">Carregando…</span>
+    <button class="btn small" id="reset" hidden>Limpar filtros</button>
+    <span style="flex:1"></span>
+    <button class="btn primary" id="novoItem">+ Novo item</button>
+  </div>
+  <div class="legend">
+    <span>Conferido: <b style="color:var(--ok)">✓</b> conferido · <b style="color:var(--falta)">✗</b> falta · <b>—</b> não conferido. Clique no símbolo para alternar.</span>
+  </div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Qtde</th><th>Material</th><th>Patrimônio</th><th>Localização</th><th>Unidade/Viatura</th><th style="text-align:center">Conferido</th><th></th></tr></thead>
+    <tbody id="tb"><tr><td colspan="7" class="empty">Carregando dados do banco…</td></tr></tbody>
+  </table></div>
 </section>
-<section id="pane-conf" role="tabpanel" aria-labelledby="tab-conf" hidden>
-<p class="confnote">Conferência física realizada nas viaturas ABR10 e ABR6: comparação entre o que consta no SISCOMAT e o que foi encontrado na realidade. Estes itens ainda não estão vinculados aos registros do inventário — a relação será feita em etapa posterior.</p>
-<div class="filters" id="filtersConf"></div>
-<div class="count"><span id="countConf"></span><button class="reset" id="resetConf" hidden>Limpar filtros</button></div>
-<div class="legend"><span class="lo"><i></i>Sobressalente (passando)</span><span class="lf"><i></i>Falta</span></div>
-<div class="tablewrap"><table>
-  <thead><tr><th>Unidade/Viatura</th><th>Item conferido</th><th style="text-align:right">Sobressalente</th><th style="text-align:right">Falta</th></tr></thead>
-  <tbody id="tbConf"></tbody>
-</table></div>
+
+<section id="pane-cad" role="tabpanel" hidden>
+  <div class="cadgrid">
+    <div class="cadcard">
+      <h2>Unidades/Viaturas</h2>
+      <ul id="listaUnidades"></ul>
+      <div class="addrow">
+        <input id="novaUnidade" placeholder="Nova unidade…" aria-label="Nome da nova unidade">
+        <button class="btn primary" id="addUnidade">Adicionar</button>
+      </div>
+    </div>
+    <div class="cadcard">
+      <h2>Localizações</h2>
+      <div class="addrow" style="margin-bottom:10px">
+        <select id="cadUnidadeSel" aria-label="Unidade das localizações"></select>
+      </div>
+      <ul id="listaLocais"></ul>
+      <div class="addrow">
+        <input id="novoLocal" placeholder="Nova localização…" aria-label="Nome da nova localização">
+        <button class="btn primary" id="addLocal">Adicionar</button>
+      </div>
+    </div>
+  </div>
 </section>
-<footer>Gerado a partir do export do SISCOMAT em 20/08/2026. Dados estáticos embutidos na página — para atualizar, gere novamente a partir dos CSVs.</footer>
+
+<footer>Dados ao vivo do banco Supabase (projeto siscomat). Alterações feitas aqui valem para todos que abrirem a página.</footer>
 </div>
+
+<div class="overlay" id="overlay">
+  <form class="modal" id="itemForm">
+    <h2 id="modalTitle">Novo item</h2>
+    <label for="fMaterial">Material</label>
+    <input id="fMaterial" required>
+    <div class="row">
+      <div><label for="fQtde">Qtde</label><input id="fQtde" type="number" min="0" value="1" required></div>
+      <div><label for="fPat">Patrimônio (opcional)</label><input id="fPat"></div>
+    </div>
+    <label for="fUnidade">Unidade/Viatura</label>
+    <select id="fUnidade" required></select>
+    <label for="fLocal">Localização</label>
+    <select id="fLocal" required></select>
+    <div class="actions">
+      <button type="button" class="btn" id="cancelar">Cancelar</button>
+      <button type="submit" class="btn primary" id="salvar">Salvar</button>
+    </div>
+  </form>
+</div>
+<div id="toast"></div>
+
 <script>
-const DATA = [{"unidade": "ABR10", "material": "BOIA CIRCULAR", "qtde": 1, "patrimonio": null, "local": "Carroceria Central", "conferido": true}, {"unidade": "ABR10", "material": "BOLSA AMARELA COM CORDA 11MM 40 METROS", "qtde": 1, "patrimonio": null, "local": "BOLSA DE SALVAMENTO", "conferido": true}, {"unidade": "ABR10", "material": "BOLSA DE APH", "qtde": 1, "patrimonio": null, "local": "Carroceria Esquerda", "conferido": true}, {"unidade": "ABR10", "material": "BVM ADULTO", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": true}, {"unidade": "ABR10", "material": "BVM INFANTIL", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": true}, {"unidade": "ABR10", "material": "CILINDRO DE OXIGENIO", "qtde": 1, "patrimonio": "86300", "local": "Carroceria Esquerda", "conferido": true}, {"unidade": "ABR10", "material": "COLAR CERVICAL ADULTO", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": true}, {"unidade": "ABR10", "material": "COLAR CERVICAL INFANTIL", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": true}, {"unidade": "ABR10", "material": "CORTADOR DE ANEL", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": true}, {"unidade": "ABR10", "material": "ESFIGMOMANOMETRO DIGITAL TELA DE CRISTAL", "qtde": 1, "patrimonio": "74882", "local": "Bolsa APH", "conferido": true}, {"unidade": "ABR10", "material": "ESTABILIZADOR DE CABEÇA (PAR)", "qtde": 1, "patrimonio": null, "local": "Carroceria Central", "conferido": true}, {"unidade": "ABR10", "material": "facao", "qtde": 1, "patrimonio": null, "local": "Carroceria Central", "conferido": true}, {"unidade": "ABR10", "material": "GRI GRI", "qtde": 1, "patrimonio": null, "local": "BOLSA DE SALVAMENTO", "conferido": true}, {"unidade": "ABR10", "material": "LANTERNA BUSCA E LOCALIZAÇÃO", "qtde": 1, "patrimonio": null, "local": "ABR", "conferido": true}, {"unidade": "ABR10", "material": "LONA PARA PALCO DE MATERIAIS", "qtde": 1, "patrimonio": null, "local": "Carroceria Central", "conferido": true}, {"unidade": "ABR10", "material": "MOSQUETAO ASSIMETRICO DE ACO", "qtde": 1, "patrimonio": null, "local": "BOLSA DE SALVAMENTO", "conferido": true}, {"unidade": "ABR10", "material": "PE DE CABRA", "qtde": 1, "patrimonio": null, "local": "Carroceria Central", "conferido": true}, {"unidade": "ABR10", "material": "POCKET MASK", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": true}, {"unidade": "ABR10", "material": "PULSOXIMETRO DE DEDO", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": true}, {"unidade": "ABR10", "material": "ROUPA DE PROTEÇÃO LARANJA", "qtde": 1, "patrimonio": null, "local": "Carroceria Central", "conferido": true}, {"unidade": "ABR10", "material": "ROUPA SANITARIA COM BOTA", "qtde": 1, "patrimonio": null, "local": "Carroceria Central", "conferido": false}, {"unidade": "ABR10", "material": "SACO CINZA PARA CADAVER COM ZIPER", "qtde": 1, "patrimonio": null, "local": "Carroceria Central", "conferido": true}, {"unidade": "ABR10", "material": "SACO PRETO PARA CADAVER COM ZIPER", "qtde": 1, "patrimonio": null, "local": "Carroceria Central", "conferido": false}, {"unidade": "ABR10", "material": "TALA MOLDAVEL AZUL", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": true}, {"unidade": "ABR10", "material": "TALA MOLDAVEL AZUL", "qtde": 1, "patrimonio": null, "local": "BOLSA DE SALVAMENTO", "conferido": true}, {"unidade": "ABR10", "material": "TALA MOLDAVEL LARANJA", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": true}, {"unidade": "ABR10", "material": "TALA MOLDAVEL ROXA", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": true}, {"unidade": "ABR10", "material": "TALA MOLDAVEL VERDE", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": true}, {"unidade": "ABR10", "material": "TESOURA PONTA ROMBA", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": true}, {"unidade": "ABR10", "material": "TIRANTE ARANHA", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": true}, {"unidade": "ABR10", "material": "TORNIQUETE TATICO", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": true}, {"unidade": "ABR10", "material": "PEDRA DE LASTRO DE 2KG", "qtde": 16, "patrimonio": null, "local": "Carroceria Direita", "conferido": true}, {"unidade": "ABR10", "material": "BLOCANTE BASIC AB-20 ANTHRON", "qtde": 2, "patrimonio": null, "local": "BOLSA DE SALVAMENTO", "conferido": true}, {"unidade": "ABR10", "material": "CABO DE FUNDO PARA MERGULHO", "qtde": 2, "patrimonio": null, "local": "Carroceria Central", "conferido": true}, {"unidade": "ABR10", "material": "CADEIRINHA DE SALVAMENTO SINGING ROCK COM BLOCANTE VENTRAL", "qtde": 2, "patrimonio": null, "local": "Carroceria Central", "conferido": true}, {"unidade": "ABR10", "material": "COLETE CLASSE V", "qtde": 2, "patrimonio": null, "local": "Carroceria Central", "conferido": true}, {"unidade": "ABR10", "material": "KIT TROCA DE VELA( CHAVE, ALICATE E VELA)", "qtde": 2, "patrimonio": null, "local": "Carroceria Central", "conferido": true}, {"unidade": "ABR10", "material": "LUVA DE SALVAMENTO PRETA", "qtde": 2, "patrimonio": null, "local": "BOLSA DE SALVAMENTO", "conferido": true}, {"unidade": "ABR10", "material": "MOSQUETAO SIMETRICO DE ALUMINIO", "qtde": 2, "patrimonio": null, "local": "BOLSA DE SALVAMENTO", "conferido": true}, {"unidade": "ABR10", "material": "OITO DE RESGATE DE ACO", "qtde": 2, "patrimonio": null, "local": "BOLSA DE SALVAMENTO", "conferido": true}, {"unidade": "ABR10", "material": "RESCUE AMARELO", "qtde": 2, "patrimonio": null, "local": "Carroceria Central", "conferido": true}, {"unidade": "ABR10", "material": "ROLDANA DUPLA ANTRHON", "qtde": 2, "patrimonio": null, "local": "BOLSA DE SALVAMENTO", "conferido": true}, {"unidade": "ABR10", "material": "ROLDANA PEQUENA AZUL", "qtde": 2, "patrimonio": null, "local": "BOLSA DE SALVAMENTO", "conferido": true}, {"unidade": "ABR10", "material": "ROLDANA SIMPLES ANTHRON", "qtde": 2, "patrimonio": null, "local": "BOLSA DE SALVAMENTO", "conferido": true}, {"unidade": "ABR10", "material": "STOP DESCENSOR", "qtde": 2, "patrimonio": null, "local": "BOLSA DE SALVAMENTO", "conferido": true}, {"unidade": "ABR10", "material": "BACKPACK", "qtde": 4, "patrimonio": null, "local": "Carroceria Direita", "conferido": true}, {"unidade": "ABR10", "material": "BLOCANTE DE PUNHO", "qtde": 4, "patrimonio": null, "local": "BOLSA DE SALVAMENTO", "conferido": true}, {"unidade": "ABR10", "material": "CABO DA VIDA", "qtde": 4, "patrimonio": null, "local": "BOLSA DE SALVAMENTO", "conferido": true}, {"unidade": "ABR10", "material": "CAPACETE DE SALVAMENTO AMARELO", "qtde": 4, "patrimonio": null, "local": "Carroceria Central", "conferido": true}, {"unidade": "ABR10", "material": "CILINDRO DE MERGULHO S80", "qtde": 4, "patrimonio": null, "local": "Carroceria Direita", "conferido": true}, {"unidade": "ABR10", "material": "CINTO DE LASTRO", "qtde": 4, "patrimonio": null, "local": "Carroceria Direita", "conferido": true}, {"unidade": "ABR10", "material": "CONJUNTO REGULADOR DE MERGULHO", "qtde": 4, "patrimonio": null, "local": "Carroceria Direita", "conferido": true}, {"unidade": "ABR10", "material": "LONGE PARA CADEIRINHA", "qtde": 4, "patrimonio": null, "local": "BOLSA DE SALVAMENTO", "conferido": false}, {"unidade": "ABR10", "material": "MOSQUETAO SIMETRICO DE ACO", "qtde": 4, "patrimonio": null, "local": "BOLSA DE SALVAMENTO", "conferido": false}, {"unidade": "ABR10", "material": "FITA TUBULAR", "qtde": 5, "patrimonio": null, "local": "BOLSA DE SALVAMENTO", "conferido": false}, {"unidade": "ABR10", "material": "MOSQUETAO ASSIMETRICO DE ALUMINIO", "qtde": 5, "patrimonio": null, "local": "BOLSA DE SALVAMENTO", "conferido": true}, {"unidade": "ABR6", "material": "BOIA CIRCULAR", "qtde": 1, "patrimonio": null, "local": "CARROCERIA", "conferido": true}, {"unidade": "ABR6", "material": "BOIA DE ARINQUE", "qtde": 1, "patrimonio": null, "local": "CARROCERIA", "conferido": true}, {"unidade": "ABR6", "material": "CABO SOLTEIRO 12MM 16M", "qtde": 1, "patrimonio": null, "local": "CARROCERIA", "conferido": false}, {"unidade": "ABR6", "material": "CAPACETE DE SALVAMENTO AMARELO", "qtde": 1, "patrimonio": null, "local": "CARROCERIA", "conferido": true}, {"unidade": "ABR6", "material": "ENXADAO", "qtde": 1, "patrimonio": null, "local": "CARROCERIA", "conferido": true}, {"unidade": "ABR6", "material": "ESCALER", "qtde": 1, "patrimonio": null, "local": "CARROCERIA", "conferido": true}, {"unidade": "ABR6", "material": "facao", "qtde": 1, "patrimonio": null, "local": "CARROCERIA", "conferido": false}, {"unidade": "ABR6", "material": "FITA COM CATRACA PEQUENA", "qtde": 1, "patrimonio": null, "local": "CARROCERIA", "conferido": true}, {"unidade": "ABR6", "material": "FITA DE CARGA PARA AGM", "qtde": 1, "patrimonio": null, "local": "CARROCERIA", "conferido": true}, {"unidade": "ABR6", "material": "PA BICO REDONDO", "qtde": 1, "patrimonio": null, "local": "CARROCERIA", "conferido": true}, {"unidade": "ABR6", "material": "PICARETA", "qtde": 1, "patrimonio": null, "local": "CARROCERIA", "conferido": true}, {"unidade": "ABR6", "material": "SACO PRETO PARA CADAVER COM ZIPER", "qtde": 1, "patrimonio": null, "local": "CARROCERIA", "conferido": false}, {"unidade": "ABR6", "material": "CILINDRO DE MERGULHO S80", "qtde": 10, "patrimonio": null, "local": "CARROCERIA", "conferido": false}, {"unidade": "ABR6", "material": "BACKPACK", "qtde": 2, "patrimonio": null, "local": "CARROCERIA", "conferido": true}, {"unidade": "ABR6", "material": "BOMBONA DE MARCAÇÃO", "qtde": 2, "patrimonio": null, "local": "CARROCERIA", "conferido": true}, {"unidade": "ABR6", "material": "CORDA 12,5MM 45 METROS", "qtde": 2, "patrimonio": null, "local": "CARROCERIA", "conferido": false}, {"unidade": "ABR6", "material": "MANGUEIRA COMBUSTÍVEL MOTOR DE POPA", "qtde": 2, "patrimonio": null, "local": "CARROCERIA", "conferido": false}, {"unidade": "ABR6", "material": "MOTOR DE POPA HIDEA", "qtde": 2, "patrimonio": null, "local": "CARROCERIA", "conferido": false}, {"unidade": "ABR6", "material": "REMO", "qtde": 2, "patrimonio": null, "local": "CARROCERIA", "conferido": true}, {"unidade": "ABR6", "material": "RESCUE AMARELO", "qtde": 2, "patrimonio": null, "local": "CARROCERIA", "conferido": false}, {"unidade": "ABR6", "material": "TANQUE DE COMBUSTIVEL DE 24L", "qtde": 2, "patrimonio": null, "local": "CARROCERIA", "conferido": false}, {"unidade": "ABR6", "material": "CONJUNTO REGULADOR DE MERGULHO", "qtde": 4, "patrimonio": null, "local": "CARROCERIA", "conferido": false}, {"unidade": "ABR6", "material": "COLETE CLASSE IV", "qtde": 6, "patrimonio": null, "local": "CARROCERIA", "conferido": false}, {"unidade": "ESCALER", "material": "MANGUEIRA COMBUSTÍVEL MOTOR DE POPA", "qtde": 1, "patrimonio": null, "local": "ESCALER", "conferido": null}, {"unidade": "ESCALER", "material": "TANQUE DE COMBUSTIVEL DE 24L", "qtde": 1, "patrimonio": null, "local": "ESCALER", "conferido": null}, {"unidade": "ESCALER", "material": "REMO", "qtde": 2, "patrimonio": null, "local": "ESCALER", "conferido": null}, {"unidade": "FLEX GBS", "material": "BOLSA DE APH", "qtde": 1, "patrimonio": null, "local": "FLEX GBS", "conferido": null}, {"unidade": "FLEX GBS", "material": "BVM ADULTO", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": null}, {"unidade": "FLEX GBS", "material": "BVM INFANTIL", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": null}, {"unidade": "FLEX GBS", "material": "CILINDRO DE OXIGENIO COM FLUXIMETRO - WHITE MED", "qtde": 1, "patrimonio": "532241", "local": "FLEX GBS", "conferido": null}, {"unidade": "FLEX GBS", "material": "COLAR CERVICAL ADULTO", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": null}, {"unidade": "FLEX GBS", "material": "COLAR CERVICAL INFANTIL", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": null}, {"unidade": "FLEX GBS", "material": "CONJUNTO GPS GARMIN", "qtde": 1, "patrimonio": null, "local": "FLEX GBS", "conferido": null}, {"unidade": "FLEX GBS", "material": "ESFIGMOMANOMETRO DIGITAL TELA DE CRISTAL", "qtde": 1, "patrimonio": "74882", "local": "Bolsa APH", "conferido": null}, {"unidade": "FLEX GBS", "material": "FOLE PARA ENCHER BOTE", "qtde": 1, "patrimonio": null, "local": "FLEX GBS", "conferido": null}, {"unidade": "FLEX GBS", "material": "PULSOXIMETRO DE DEDO", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": null}, {"unidade": "FLEX GBS", "material": "RESCUE AMARELO", "qtde": 1, "patrimonio": null, "local": "FLEX GBS", "conferido": null}, {"unidade": "FLEX GBS", "material": "SACO CINZA PARA CADAVER COM ZIPER", "qtde": 1, "patrimonio": null, "local": "FLEX GBS", "conferido": null}, {"unidade": "FLEX GBS", "material": "SUGADOR DE ESPUMA", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": null}, {"unidade": "FLEX GBS", "material": "TALA MOLDAVEL AZUL", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": null}, {"unidade": "FLEX GBS", "material": "TALA MOLDAVEL LARANJA", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": null}, {"unidade": "FLEX GBS", "material": "TALA MOLDAVEL ROXA", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": null}, {"unidade": "FLEX GBS", "material": "TALA MOLDAVEL VERDE", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": null}, {"unidade": "FLEX GBS", "material": "TESOURA PONTA ROMBA", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": null}, {"unidade": "FLEX GBS", "material": "TIRANTE AMARELO DE PRANCHA", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": null}, {"unidade": "FLEX GBS", "material": "TIRANTE VERDE DE PRANCHA", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": null}, {"unidade": "FLEX GBS", "material": "TIRANTE VERMELHO DE PRANCHA", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": null}, {"unidade": "FLEX GBS", "material": "TORNIQUETE TATICO", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": null}, {"unidade": "FLEX GBS", "material": "BACKPACK", "qtde": 2, "patrimonio": null, "local": "FLEX GBS", "conferido": null}, {"unidade": "FLEX GBS", "material": "BOIA CIRCULAR", "qtde": 2, "patrimonio": null, "local": "FLEX GBS", "conferido": null}, {"unidade": "FLEX GBS", "material": "CABO DE FUNDO PARA MERGULHO", "qtde": 2, "patrimonio": null, "local": "FLEX GBS", "conferido": null}, {"unidade": "FLEX GBS", "material": "CILINDRO DE MERGULHO S80", "qtde": 2, "patrimonio": null, "local": "FLEX GBS", "conferido": null}, {"unidade": "FLEX GBS", "material": "CINTO DE LASTRO", "qtde": 2, "patrimonio": null, "local": "FLEX GBS", "conferido": null}, {"unidade": "FLEX GBS", "material": "COLETE CLASSE IV", "qtde": 2, "patrimonio": null, "local": "FLEX GBS", "conferido": null}, {"unidade": "FLEX GBS", "material": "CONJUNTO REGULADOR DE MERGULHO", "qtde": 2, "patrimonio": null, "local": "FLEX GBS", "conferido": null}, {"unidade": "FLEX GBS", "material": "CORDA 10,5MM 15 METROS", "qtde": 2, "patrimonio": null, "local": "FLEX GBS", "conferido": null}, {"unidade": "FLEX GBS", "material": "REMO", "qtde": 2, "patrimonio": null, "local": "FLEX GBS", "conferido": null}, {"unidade": "FLEX GBS", "material": "PEDRA DE LASTRO DE 2KG", "qtde": 8, "patrimonio": null, "local": "FLEX GBS", "conferido": null}, {"unidade": "L1", "material": "ASPIRADOR MANUAL", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": true}, {"unidade": "L1", "material": "BOLSA DE APH", "qtde": 1, "patrimonio": null, "local": "LANCHA RAPIDA L1", "conferido": true}, {"unidade": "L1", "material": "BVM ADULTO", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": true}, {"unidade": "L1", "material": "BVM INFANTIL", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": true}, {"unidade": "L1", "material": "CILINDRO DE OXIGENIO", "qtde": 1, "patrimonio": "86300", "local": "LANCHA RAPIDA L1", "conferido": true}, {"unidade": "L1", "material": "COLAR CERVICAL ADULTO", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": true}, {"unidade": "L1", "material": "COLAR CERVICAL INFANTIL", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": true}, {"unidade": "L1", "material": "DECO MARKER", "qtde": 1, "patrimonio": null, "local": "GAVETA ESQUERDA", "conferido": false}, {"unidade": "L1", "material": "ESFIGMOMANOMETRO DIGITAL TELA DE CRISTAL", "qtde": 1, "patrimonio": "74882", "local": "Bolsa APH", "conferido": true}, {"unidade": "L1", "material": "LANTERNA BUSCA E LOCALIZAÇÃO", "qtde": 1, "patrimonio": null, "local": "LANCHA RAPIDA L1", "conferido": null}, {"unidade": "L1", "material": "POCKET MASK", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": true}, {"unidade": "L1", "material": "PRANCHA VERMELHA", "qtde": 1, "patrimonio": null, "local": "LANCHA RAPIDA L1", "conferido": null}, {"unidade": "L1", "material": "PULSOXIMETRO DE DEDO", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": true}, {"unidade": "L1", "material": "RESCUE AMARELO", "qtde": 1, "patrimonio": null, "local": "LANCHA RAPIDA L1", "conferido": true}, {"unidade": "L1", "material": "SISTEMA PARA BUSCA CIRCULAR (POITA, DEFENSA, CABO E BOIA)", "qtde": 1, "patrimonio": null, "local": "LANCHA RAPIDA L1", "conferido": null}, {"unidade": "L1", "material": "TALA MOLDAVEL AZUL", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": true}, {"unidade": "L1", "material": "TALA MOLDAVEL LARANJA", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": true}, {"unidade": "L1", "material": "TALA MOLDAVEL ROXA", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": true}, {"unidade": "L1", "material": "TALA MOLDAVEL VERDE", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": true}, {"unidade": "L1", "material": "TESOURA PONTA ROMBA", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": true}, {"unidade": "L1", "material": "TIRANTE ARANHA", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": true}, {"unidade": "L1", "material": "TORNIQUETE TATICO", "qtde": 1, "patrimonio": null, "local": "Bolsa APH", "conferido": true}, {"unidade": "L1", "material": "ÂNCORA DANFORTH", "qtde": 1, "patrimonio": null, "local": "LANCHA RAPIDA L1", "conferido": true}, {"unidade": "L1", "material": "PEDRA DE LASTRO DE 2KG", "qtde": 16, "patrimonio": null, "local": "LANCHA RAPIDA L1", "conferido": true}, {"unidade": "L1", "material": "BOIA CIRCULAR", "qtde": 2, "patrimonio": null, "local": "LANCHA RAPIDA L1", "conferido": true}, {"unidade": "L1", "material": "CABO DE FUNDO PARA MERGULHO", "qtde": 2, "patrimonio": null, "local": "GAVETA ESQUERDA", "conferido": true}, {"unidade": "L1", "material": "CINTO DE LASTRO", "qtde": 2, "patrimonio": null, "local": "GAVETA ESQUERDA", "conferido": true}, {"unidade": "L1", "material": "CINTO DE LASTRO", "qtde": 2, "patrimonio": null, "local": "LANCHA RAPIDA L1", "conferido": true}, {"unidade": "L1", "material": "COLETE CLASSE V", "qtde": 2, "patrimonio": null, "local": "LANCHA RAPIDA L1", "conferido": true}, {"unidade": "L1", "material": "COLETE EQUILIBRADOR DE MERGULHO", "qtde": 2, "patrimonio": null, "local": "LANCHA RAPIDA L1", "conferido": true}, {"unidade": "L1", "material": "REMO", "qtde": 2, "patrimonio": null, "local": "LANCHA RAPIDA L1", "conferido": true}, {"unidade": "L1", "material": "CILINDRO DE MERGULHO S80", "qtde": 3, "patrimonio": null, "local": "GAVETA DIREITA", "conferido": true}, {"unidade": "L1", "material": "CILINDRO DE MERGULHO S80", "qtde": 3, "patrimonio": null, "local": "LANCHA RAPIDA L1", "conferido": true}, {"unidade": "L1", "material": "EXTINTOR DE INCÊNDIO ABC", "qtde": 3, "patrimonio": null, "local": "LANCHA RAPIDA L1", "conferido": true}, {"unidade": "L1", "material": "BACKPACK", "qtde": 4, "patrimonio": null, "local": "LANCHA RAPIDA L1", "conferido": null}, {"unidade": "L1", "material": "CONJUNTO REGULADOR DE MERGULHO", "qtde": 4, "patrimonio": null, "local": "LANCHA RAPIDA L1", "conferido": true}, {"unidade": "L11", "material": "CILINDRO EPR SCOTT 9L", "qtde": 1, "patrimonio": "268590", "local": "LANCHA DE INCENDIO L11", "conferido": null}, {"unidade": "L11", "material": "CILINDRO EPR SCOTT SAFETY 6,8L", "qtde": 1, "patrimonio": "3226", "local": "LANCHA DE INCENDIO L11", "conferido": null}, {"unidade": "L11", "material": "CONJUNTO PARA APOITAR ( 2 CABOS PARA FUNDEAR, 1 CABO COM PROTEÇÃO)", "qtde": 1, "patrimonio": null, "local": "LANCHA DE INCENDIO L11", "conferido": null}, {"unidade": "L11", "material": "ESGUICHO 1,5 CANO LONGO", "qtde": 1, "patrimonio": null, "local": "LANCHA DE INCENDIO L11", "conferido": null}, {"unidade": "L11", "material": "ESGUICHO ANTIGO 1,5", "qtde": 1, "patrimonio": null, "local": "LANCHA DE INCENDIO L11", "conferido": null}, {"unidade": "L11", "material": "GALÃO 25L DE LGE", "qtde": 1, "patrimonio": null, "local": "LANCHA DE INCENDIO L11", "conferido": null}, {"unidade": "L11", "material": "MOSQUETAO SIMETRICO DE ACO", "qtde": 1, "patrimonio": null, "local": "LANCHA DE INCENDIO L11", "conferido": null}, {"unidade": "L11", "material": "SUGADOR DE ESPUMA", "qtde": 1, "patrimonio": null, "local": "LANCHA DE INCENDIO L11", "conferido": null}, {"unidade": "L11", "material": "ADAPTADOR ROSCA FÊMEA 2,5", "qtde": 2, "patrimonio": null, "local": "LANCHA DE INCENDIO L11", "conferido": null}, {"unidade": "L11", "material": "BOLSA AMARELA COM CORDA 11MM 44 METROS", "qtde": 2, "patrimonio": null, "local": "LANCHA DE INCENDIO L11", "conferido": null}, {"unidade": "L11", "material": "CAPA DE APROXIMAÇÃO", "qtde": 2, "patrimonio": null, "local": "LANCHA DE INCENDIO L11", "conferido": null}, {"unidade": "L11", "material": "FITA TUBULAR", "qtde": 2, "patrimonio": null, "local": "LANCHA DE INCENDIO L11", "conferido": null}, {"unidade": "L11", "material": "MASCARA EPR SCOTT", "qtde": 2, "patrimonio": null, "local": "LANCHA DE INCENDIO L11", "conferido": null}, {"unidade": "L11", "material": "SUPORTE DORSAL EPR SCOTT NXG-7", "qtde": 2, "patrimonio": "69125", "local": "LANCHA DE INCENDIO L11", "conferido": null}, {"unidade": "L11", "material": "TRANSPORTADOR DE MANGUEIRA", "qtde": 2, "patrimonio": null, "local": "LANCHA DE INCENDIO L11", "conferido": null}, {"unidade": "L11", "material": "CHAVE DE MANGUEIRA", "qtde": 3, "patrimonio": null, "local": "LANCHA DE INCENDIO L11", "conferido": null}, {"unidade": "L11", "material": "CORDELETE 6MM", "qtde": 3, "patrimonio": null, "local": "LANCHA DE INCENDIO L11", "conferido": null}, {"unidade": "L11", "material": "REDUCAO DE 2,5\" PARA 1,5\"", "qtde": 3, "patrimonio": null, "local": "LANCHA DE INCENDIO L11", "conferido": null}, {"unidade": "L11", "material": "BOIA CIRCULAR", "qtde": 4, "patrimonio": null, "local": "LANCHA DE INCENDIO L11", "conferido": null}, {"unidade": "L11", "material": "COLETE SV CLASSE III", "qtde": 6, "patrimonio": null, "local": "LANCHA DE INCENDIO L11", "conferido": null}, {"unidade": "RESERVA TEC BUC", "material": "MACA TIPO CESTO", "qtde": 1, "patrimonio": "100347", "local": "RESERVA TECNICA BUC", "conferido": null}, {"unidade": "RESERVA TEC BUC", "material": "PRANCHA RIGIDA", "qtde": 1, "patrimonio": null, "local": "RESERVA TECNICA BUC", "conferido": null}, {"unidade": "RESERVA TEC BUC", "material": "COLETE EQUILIBRADOR DE MERGULHO", "qtde": 2, "patrimonio": null, "local": "RESERVA TECNICA BUC", "conferido": null}, {"unidade": "RESERVA TEC BUC", "material": "LANTERNA BUSCA E LOCALIZAÇÃO", "qtde": 2, "patrimonio": null, "local": "RESERVA TECNICA BUC", "conferido": null}, {"unidade": "RESERVA TEC BUC", "material": "SACO CINZA PARA CADAVER COM ZIPER", "qtde": 2, "patrimonio": null, "local": "RESERVA TECNICA BUC", "conferido": null}, {"unidade": "RESERVA TEC BUC", "material": "LANTERNA DE ANGULO RETO", "qtde": 4, "patrimonio": null, "local": "RESERVA TECNICA BUC", "conferido": null}];
+const API="https://yjpqfukumgrowvxaumhu.supabase.co/rest/v1";
+const KEY="sb_publishable_UowCnbBEEH--hItW5ixsdA_ZgZek8CH";
 const $=s=>document.querySelector(s);
 const norm=s=>(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
-const esc=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
-$("#stItens").textContent=DATA.length;
-$("#stQtde").textContent=DATA.reduce((a,d)=>a+d.qtde,0);
-$("#stUn").textContent=new Set(DATA.map(d=>d.unidade)).size;
+async function api(path,opts={}){
+  const res=await fetch(API+path,{...opts,headers:{
+    apikey:KEY, Authorization:"Bearer "+KEY,
+    "Content-Type":"application/json", Prefer:"return=representation",
+    ...(opts.headers||{})}});
+  if(!res.ok){ const t=await res.text(); throw new Error(res.status+": "+t); }
+  const txt=await res.text();
+  return txt?JSON.parse(txt):null;
+}
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),2200); }
+function fail(e){ console.error(e); toast("Erro ao salvar: "+e.message); }
 
-// Contexto de filtros: um conjunto de comboboxes pesquisáveis por dataset
-// ctx = {data, filters, state, valueOf, render}
-function optionsFor(ctx,key){
-  // opções derivadas dos dados já filtrados pelas OUTRAS colunas, com contagem
-  const rows=ctx.data.filter(d=>ctx.filters.every(f=>f.key===key||!ctx.state[f.key]||ctx.valueOf(d,f.key)===ctx.state[f.key]));
-  const m=new Map();
-  rows.forEach(d=>{const v=ctx.valueOf(d,key); m.set(v,(m.get(v)||0)+1)});
-  return [...m.entries()].sort((a,b)=>String(a[0]).localeCompare(String(b[0]),"pt"));
+let UNIDADES=[], LOCAIS=[], ITENS=[];
+async function loadAll(){
+  [UNIDADES,LOCAIS,ITENS]=await Promise.all([
+    api("/unidades?deleted_at=is.null&order=nome"),
+    api("/localizacoes?deleted_at=is.null&order=nome"),
+    api("/inventario?order=unidade,material"),
+  ]);
+  renderAll();
+}
+function renderAll(){
+  $("#stItens").textContent=ITENS.length;
+  $("#stQtde").textContent=ITENS.reduce((a,d)=>a+d.qtde,0);
+  $("#stUn").textContent=UNIDADES.length;
+  renderTable(); renderCombosOptions(); renderCadastros();
 }
 
-function buildCombo(f,ctx){
+// ---- Filtros (combobox pesquisável) ----
+const FILTERS=[
+  {key:"material",   tag:"Material",        all:"Todos os materiais"},
+  {key:"patrimonio", tag:"Patrimônio",      all:"Todos os patrimônios"},
+  {key:"localizacao",tag:"Localização",     all:"Todas as localizações"},
+  {key:"unidade",    tag:"Unidade/Viatura", all:"Todas as unidades"},
+];
+const state={};
+const valueOf=(d,key)=>key==="patrimonio"?(d.patrimonio||"—"):d[key];
+function optionsFor(key){
+  const rows=ITENS.filter(d=>FILTERS.every(f=>f.key===key||!state[f.key]||valueOf(d,f.key)===state[f.key]));
+  const m=new Map();
+  rows.forEach(d=>{const v=valueOf(d,key); m.set(v,(m.get(v)||0)+1)});
+  return [...m.entries()].sort((a,b)=>String(a[0]).localeCompare(String(b[0]),"pt"));
+}
+const combos={};
+function buildCombo(f){
   const root=document.createElement("div");
-  root.className="combo"; root.id="combo-"+f.key;
+  root.className="combo";
   root.innerHTML=`
     <span class="combo-tag">${f.tag}</span>
-    <button class="combo-btn" aria-haspopup="listbox" aria-expanded="false">
+    <button type="button" class="combo-btn" aria-haspopup="listbox" aria-expanded="false">
       <span class="lbl placeholder">${f.all}</span>
       <span class="clear" hidden title="Limpar">×</span>
       <span class="caret">▼</span>
@@ -185,132 +281,194 @@ function buildCombo(f,ctx){
   const btn=root.querySelector(".combo-btn"), lbl=root.querySelector(".lbl"),
         clear=root.querySelector(".clear"), inp=root.querySelector("input"),
         list=root.querySelector(".combo-list");
-
   function renderList(){
     const q=norm(inp.value.trim());
-    const opts=optionsFor(ctx,f.key).filter(([v])=>!q||norm(String(v)).includes(q));
+    const opts=optionsFor(f.key).filter(([v])=>!q||norm(String(v)).includes(q));
     list.innerHTML=opts.length
-      ? opts.map(([v,n])=>`<li role="option" data-v="${esc(v)}" class="${ctx.state[f.key]===v?"sel":""}">${esc(v)}<span class="n">${n}</span></li>`).join("")
+      ? opts.map(([v,n])=>`<li role="option" data-v="${esc(v)}" class="${state[f.key]===v?"sel":""}">${esc(v)}<span class="n">${n}</span></li>`).join("")
       : `<li class="none">Nada encontrado</li>`;
   }
   function open(){ closeAll(); root.classList.add("open"); btn.setAttribute("aria-expanded","true"); inp.value=""; renderList(); inp.focus(); }
   function close(){ root.classList.remove("open"); btn.setAttribute("aria-expanded","false"); }
   function set(v){
-    ctx.state[f.key]=v;
+    state[f.key]=v;
     if(v){ lbl.textContent=v; lbl.classList.remove("placeholder"); clear.hidden=false; root.dataset.active=""; }
     else { lbl.textContent=f.all; lbl.classList.add("placeholder"); clear.hidden=true; delete root.dataset.active; }
-    close(); ctx.render();
+    close(); renderTable();
   }
   btn.addEventListener("click",e=>{ if(e.target===clear){ set(null); e.stopPropagation(); return; } root.classList.contains("open")?close():open(); });
   inp.addEventListener("input",renderList);
   inp.addEventListener("keydown",e=>{
     if(e.key==="Escape") close();
-    if(e.key==="Enter"){ const first=list.querySelector("li[data-v]"); if(first) set(first.dataset.v); }
+    if(e.key==="Enter"){ e.preventDefault(); const first=list.querySelector("li[data-v]"); if(first) set(first.dataset.v); }
   });
-  list.addEventListener("click",e=>{ const li=e.target.closest("li[data-v]"); if(li) set(li.dataset.v===ctx.state[f.key]?null:li.dataset.v); });
-  root._close=close; root._set=set;
+  list.addEventListener("click",e=>{ const li=e.target.closest("li[data-v]"); if(li) set(li.dataset.v===state[f.key]?null:li.dataset.v); });
+  root._close=close; root._set=set; root._renderList=renderList;
   return root;
 }
 function closeAll(){ document.querySelectorAll(".combo.open").forEach(c=>c._close()); }
 document.addEventListener("click",e=>{ if(!e.target.closest(".combo")) closeAll(); });
+FILTERS.forEach(f=>{ const c=buildCombo(f); combos[f.key]=c; $("#filters").append(c); });
+function renderCombosOptions(){ /* opções derivam de ITENS a cada abertura; nada a fazer aqui */ }
+$("#reset").onclick=()=>FILTERS.forEach(f=>combos[f.key]._set(null));
 
-// ---- Aba 1: Inventário ----
-const ctxInv={
-  data:DATA,
-  filters:[
-    {key:"material",  tag:"Material",        all:"Todos os materiais"},
-    {key:"patrimonio",tag:"Patrimônio",      all:"Todos os patrimônios"},
-    {key:"local",     tag:"Localização",     all:"Todas as localizações"},
-    {key:"unidade",   tag:"Unidade/Viatura", all:"Todas as unidades"},
-  ],
-  state:{},
-  valueOf:(d,key)=>key==="patrimonio"?(d.patrimonio||"—"):d[key],
-  render:renderTable,
-};
-const combos={};
-ctxInv.filters.forEach(f=>{ const c=buildCombo(f,ctxInv); combos[f.key]=c; $("#filters").append(c); });
-
-$("#reset").onclick=()=>ctxInv.filters.forEach(f=>combos[f.key]._set(null));
-
+// ---- Tabela do inventário ----
+const CONF_NEXT={conferido:"falta", falta:"nao_conferido", nao_conferido:"conferido"};
+const CONF_ICON={conferido:"✓", falta:"✗", nao_conferido:"—"};
+const CONF_TITLE={conferido:"Conferido", falta:"Falta", nao_conferido:"Não conferido"};
 function renderTable(){
-  const s=ctxInv.state;
-  const rows=DATA.filter(d=>ctxInv.filters.every(f=>!s[f.key]||ctxInv.valueOf(d,f.key)===s[f.key]));
-  $("#reset").hidden=!ctxInv.filters.some(f=>s[f.key]);
-  $("#count").textContent=rows.length+" de "+DATA.length+" itens";
-  $("#tb").innerHTML=rows.length?rows.map(d=>
-    `<tr><td class="q" data-label="Qtde">${d.qtde}</td><td class="m" data-label="Material">${esc(d.material)}</td><td class="pat" data-label="Patrimônio">${d.patrimonio?esc(d.patrimonio):"—"}</td><td data-label="Localização">${esc(d.local)}</td><td data-label="Unidade/Viatura"><span class="badge">${esc(d.unidade)}</span></td><td class="chk" data-label="Conferido">${d.conferido===true?'<span class="ok" title="Conferido">✓</span>':d.conferido===false?'<span class="no" title="Não conferido">✗</span>':'<span class="na" title="Sem registro de conferência">—</span>'}</td></tr>`
-  ).join(""):`<tr><td colspan="6" class="empty">Nenhum material encontrado. Limpe os filtros para ver tudo.</td></tr>`;
+  const rows=ITENS.filter(d=>FILTERS.every(f=>!state[f.key]||valueOf(d,f.key)===state[f.key]));
+  $("#reset").hidden=!FILTERS.some(f=>state[f.key]);
+  $("#count").textContent=rows.length+" de "+ITENS.length+" itens";
+  $("#tb").innerHTML=rows.length?rows.map(d=>`<tr>
+    <td class="q" data-label="Qtde"><span class="qbox">
+      <button type="button" title="Diminuir" onclick="mudarQtde(${d.id},-1)">−</button><b>${d.qtde}</b><button type="button" title="Aumentar" onclick="mudarQtde(${d.id},1)">+</button>
+    </span></td>
+    <td class="m" data-label="Material">${esc(d.material)}</td>
+    <td class="pat" data-label="Patrimônio">${d.patrimonio?esc(d.patrimonio):"—"}</td>
+    <td data-label="Localização">${esc(d.localizacao)}</td>
+    <td data-label="Unidade/Viatura"><span class="badge">${esc(d.unidade)}</span></td>
+    <td data-label="Conferido" style="text-align:center"><button type="button" class="chkbtn ${d.conferido}" title="${CONF_TITLE[d.conferido]} — clique para alternar" onclick="ciclarConferido(${d.id})">${CONF_ICON[d.conferido]}</button></td>
+    <td class="acts"><button class="btn small" onclick="editarItem(${d.id})">Editar</button> <button class="btn small danger" onclick="excluirItem(${d.id})">Excluir</button></td>
+  </tr>`).join(""):`<tr><td colspan="7" class="empty">Nenhum material encontrado. Limpe os filtros para ver tudo.</td></tr>`;
 }
-renderTable();
 
-// ---- Aba Conferência (dados apartados do SISCOMAT) ----
-const CONF=[
-  {v:"ABR10",item:"Estabilizador de cabeça",sobra:1},
-  {v:"ABR10",item:"Saco para cadáver cinza infantil",sobra:1},
-  {v:"ABR10",item:"Tesoura ponta romba",sobra:1},
-  {v:"ABR10",item:"Cabo da vida",sobra:1},
-  {v:"ABR10",item:"Cilindro de mergulho S80",sobra:1},
-  {v:"ABR10",item:"Cordeletes para estribo",sobra:3},
-  {v:"ABR10",item:"Maca do tipo lona encerada",sobra:1},
-  {v:"ABR10",item:"Roupa sanitária com bota branca",falta:1},
-  {v:"ABR10",item:"Saco para cadáver preto",falta:1},
-  {v:"ABR10",item:"Tala moldável azul",falta:1},
-  {v:"ABR10",item:"Colete classe V",falta:1},
-  {v:"ABR10",item:"Longe para cadeirinha",falta:2},
-  {v:"ABR10",item:"Mosquetões simétricos em aço",falta:3},
-  {v:"ABR10",item:"Fita tubular",falta:1},
-  {v:"ABR6",item:"Capacete de salvamento amarelo",sobra:1},
-  {v:"ABR6",item:"Remo",sobra:1},
-  {v:"ABR6",item:"Coletes classe V",sobra:6},
-  {v:"ABR6",item:"Tripé de resgate",sobra:1},
-  {v:"ABR6",item:"Cinto de lastro com 3 pedras de 2kg",sobra:1},
-  {v:"ABR6",item:"Tala rocha",sobra:1},
-  {v:"ABR6",item:"Tala azul",sobra:1},
-  {v:"ABR6",item:"Maca do tipo sexto",sobra:1},
-  {v:"ABR6",item:"Saco para cadáver cinza",sobra:1},
-  {v:"ABR6",item:"Cabo solteiro 12mm de 16m",falta:1},
-  {v:"ABR6",item:"Cilindros S80",falta:2},
-  {v:"ABR6",item:"Cordas de 12,5mm de 45m",falta:2},
-  {v:"ABR6",item:"Mangueiras de combustível de motor de popa",falta:2},
-  {v:"ABR6",item:"Motores de popa",falta:2},
-  {v:"ABR6",item:"Rescue amarelo",falta:2},
-  {v:"ABR6",item:"Tanques de combustível",falta:2},
-  {v:"ABR6",item:"Conjunto regulador de mergulho",falta:4},
-  {v:"ABR6",item:"Coletes classe IV",falta:4},
-];
-const ctxConf={
-  data:CONF,
-  filters:[
-    {key:"v",   tag:"Unidade/Viatura", all:"Todas as unidades"},
-    {key:"item",tag:"Item",            all:"Todos os itens"},
-  ],
-  state:{},
-  valueOf:(d,key)=>d[key],
-  render:renderConf,
+// ---- Mutações ----
+async function mudarQtde(id,delta){
+  const it=ITENS.find(i=>i.id===id); if(!it) return;
+  const nova=it.qtde+delta;
+  if(nova<0) return;
+  try{ await api(`/itens?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({qtde:nova})}); it.qtde=nova; renderAll(); }
+  catch(e){ fail(e); }
+}
+async function ciclarConferido(id){
+  const it=ITENS.find(i=>i.id===id); if(!it) return;
+  const novo=CONF_NEXT[it.conferido];
+  try{ await api(`/itens?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({conferido:novo})}); it.conferido=novo; renderTable(); }
+  catch(e){ fail(e); }
+}
+async function excluirItem(id){
+  const it=ITENS.find(i=>i.id===id); if(!it) return;
+  if(!confirm(`Excluir "${it.material}" (${it.unidade})?\nO registro fica no banco (exclusão lógica).`)) return;
+  try{ await api(`/itens?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({deleted_at:new Date().toISOString()})}); await loadAll(); toast("Item excluído"); }
+  catch(e){ fail(e); }
+}
+
+// ---- Modal novo/editar ----
+let editandoId=null;
+function preencherSelectUnidades(sel,val){
+  sel.innerHTML=UNIDADES.map(u=>`<option value="${u.id}" ${u.id===val?"selected":""}>${esc(u.nome)}</option>`).join("");
+}
+function preencherSelectLocais(unidadeId,val){
+  const ls=LOCAIS.filter(l=>l.unidade_id===Number(unidadeId));
+  $("#fLocal").innerHTML=ls.length
+    ? ls.map(l=>`<option value="${l.id}" ${l.id===val?"selected":""}>${esc(l.nome)}</option>`).join("")
+    : `<option value="">— cadastre uma localização para esta unidade —</option>`;
+}
+$("#fUnidade").addEventListener("change",()=>preencherSelectLocais($("#fUnidade").value,null));
+function abrirModal(item){
+  editandoId=item?item.id:null;
+  $("#modalTitle").textContent=item?"Editar item":"Novo item";
+  $("#fMaterial").value=item?item.material:"";
+  $("#fQtde").value=item?item.qtde:1;
+  $("#fPat").value=item?.patrimonio||"";
+  preencherSelectUnidades($("#fUnidade"),item?item.unidade_id:UNIDADES[0]?.id);
+  preencherSelectLocais($("#fUnidade").value,item?item.localizacao_id:null);
+  $("#overlay").classList.add("open");
+  $("#fMaterial").focus();
+}
+function fecharModal(){ $("#overlay").classList.remove("open"); }
+$("#novoItem").onclick=()=>abrirModal(null);
+function editarItem(id){ const it=ITENS.find(i=>i.id===id); if(it) abrirModal(it); }
+$("#cancelar").onclick=fecharModal;
+$("#overlay").addEventListener("click",e=>{ if(e.target===$("#overlay")) fecharModal(); });
+$("#itemForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const body={
+    material:$("#fMaterial").value.trim(),
+    qtde:Number($("#fQtde").value),
+    patrimonio:$("#fPat").value.trim()||null,
+    localizacao_id:Number($("#fLocal").value),
+  };
+  if(!body.material||!body.localizacao_id){ toast("Preencha material e localização"); return; }
+  try{
+    if(editandoId) await api(`/itens?id=eq.${editandoId}`,{method:"PATCH",body:JSON.stringify(body)});
+    else await api("/itens",{method:"POST",body:JSON.stringify(body)});
+    fecharModal(); await loadAll(); toast(editandoId?"Item atualizado":"Item cadastrado");
+  }catch(e2){ fail(e2); }
+});
+
+// ---- Cadastros (unidades e localizações) ----
+function renderCadastros(){
+  const cntPorUnidade={}, cntPorLocal={};
+  ITENS.forEach(i=>{ cntPorUnidade[i.unidade_id]=(cntPorUnidade[i.unidade_id]||0)+1; cntPorLocal[i.localizacao_id]=(cntPorLocal[i.localizacao_id]||0)+1; });
+  $("#listaUnidades").innerHTML=UNIDADES.map(u=>`<li>
+    <span class="nm">${esc(u.nome)}</span><span class="cnt">${cntPorUnidade[u.id]||0} itens</span>
+    <button class="btn small" onclick="renomearUnidade(${u.id})">Renomear</button>
+    <button class="btn small danger" onclick="excluirUnidade(${u.id})">Excluir</button>
+  </li>`).join("");
+  const sel=$("#cadUnidadeSel");
+  const cur=Number(sel.value)||UNIDADES[0]?.id;
+  preencherSelectUnidades(sel,cur);
+  renderListaLocais();
+}
+function renderListaLocais(){
+  const uid=Number($("#cadUnidadeSel").value);
+  const cntPorLocal={};
+  ITENS.forEach(i=>{ cntPorLocal[i.localizacao_id]=(cntPorLocal[i.localizacao_id]||0)+1; });
+  $("#listaLocais").innerHTML=LOCAIS.filter(l=>l.unidade_id===uid).map(l=>`<li>
+    <span class="nm">${esc(l.nome)}</span><span class="cnt">${cntPorLocal[l.id]||0} itens</span>
+    <button class="btn small" onclick="renomearLocal(${l.id})">Renomear</button>
+    <button class="btn small danger" onclick="excluirLocal(${l.id})">Excluir</button>
+  </li>`).join("")||`<li><span class="nm" style="color:var(--muted)">Nenhuma localização nesta unidade.</span></li>`;
+}
+$("#cadUnidadeSel").addEventListener("change",renderListaLocais);
+$("#addUnidade").onclick=async()=>{
+  const nome=$("#novaUnidade").value.trim(); if(!nome) return;
+  try{ await api("/unidades",{method:"POST",body:JSON.stringify({nome})}); $("#novaUnidade").value=""; await loadAll(); toast("Unidade criada"); }
+  catch(e){ fail(e); }
 };
-const combosConf={};
-ctxConf.filters.forEach(f=>{ const c=buildCombo(f,ctxConf); combosConf[f.key]=c; $("#filtersConf").append(c); });
-$("#resetConf").onclick=()=>ctxConf.filters.forEach(f=>combosConf[f.key]._set(null));
-
-function renderConf(){
-  const s=ctxConf.state;
-  const rows=CONF.filter(d=>ctxConf.filters.every(f=>!s[f.key]||d[f.key]===s[f.key]));
-  $("#resetConf").hidden=!ctxConf.filters.some(f=>s[f.key]);
-  $("#countConf").textContent=rows.length+" de "+CONF.length+" itens";
-  $("#tbConf").innerHTML=rows.length?rows.map(c=>
-    `<tr><td data-label="Unidade/Viatura"><span class="badge">${esc(c.v)}</span></td><td class="m" data-label="Item conferido">${esc(c.item)}</td>`+
-    `<td class="sobra" data-label="Sobressalente">${c.sobra?`<span>+${c.sobra}</span>`:"—"}</td>`+
-    `<td class="falta" data-label="Falta">${c.falta?`<span>−${c.falta}</span>`:"—"}</td></tr>`
-  ).join(""):`<tr><td colspan="4" class="empty">Nenhum item encontrado. Limpe os filtros para ver tudo.</td></tr>`;
+$("#addLocal").onclick=async()=>{
+  const nome=$("#novoLocal").value.trim(); const uid=Number($("#cadUnidadeSel").value);
+  if(!nome||!uid) return;
+  try{ await api("/localizacoes",{method:"POST",body:JSON.stringify({nome,unidade_id:uid})}); $("#novoLocal").value=""; await loadAll(); toast("Localização criada"); }
+  catch(e){ fail(e); }
+};
+async function renomearUnidade(id){
+  const u=UNIDADES.find(x=>x.id===id); if(!u) return;
+  const nome=prompt("Novo nome da unidade:",u.nome); if(!nome||nome.trim()===u.nome) return;
+  try{ await api(`/unidades?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({nome:nome.trim()})}); await loadAll(); toast("Unidade renomeada"); }
+  catch(e){ fail(e); }
 }
-renderConf();
+async function excluirUnidade(id){
+  const u=UNIDADES.find(x=>x.id===id); if(!u) return;
+  const n=ITENS.filter(i=>i.unidade_id===id).length;
+  if(!confirm(`Excluir a unidade "${u.nome}"?${n?`\nAtenção: ${n} itens ficarão ocultos junto com ela.`:""}\n(Exclusão lógica — o registro fica no banco.)`)) return;
+  try{ await api(`/unidades?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({deleted_at:new Date().toISOString()})}); await loadAll(); toast("Unidade excluída"); }
+  catch(e){ fail(e); }
+}
+async function renomearLocal(id){
+  const l=LOCAIS.find(x=>x.id===id); if(!l) return;
+  const nome=prompt("Novo nome da localização:",l.nome); if(!nome||nome.trim()===l.nome) return;
+  try{ await api(`/localizacoes?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({nome:nome.trim()})}); await loadAll(); toast("Localização renomeada"); }
+  catch(e){ fail(e); }
+}
+async function excluirLocal(id){
+  const l=LOCAIS.find(x=>x.id===id); if(!l) return;
+  const n=ITENS.filter(i=>i.localizacao_id===id).length;
+  if(!confirm(`Excluir a localização "${l.nome}"?${n?`\nAtenção: ${n} itens ficarão ocultos junto com ela.`:""}`)) return;
+  try{ await api(`/localizacoes?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({deleted_at:new Date().toISOString()})}); await loadAll(); toast("Localização excluída"); }
+  catch(e){ fail(e); }
+}
 
-const panes={ "tab-inv":"pane-inv", "tab-conf":"pane-conf" };
+// ---- Abas ----
 document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
   document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected",String(x===t)));
-  Object.entries(panes).forEach(([tab,pane])=>document.getElementById(pane).hidden=(tab!==t.id));
+  $("#pane-inv").hidden=t.id!=="tab-inv";
+  $("#pane-cad").hidden=t.id!=="tab-cad";
 });
-</script>
 
+loadAll().catch(e=>{ $("#count").textContent="Falha ao carregar o banco"; fail(e); });
+</script>
 </body>
 </html>
