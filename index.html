@@ -1,0 +1,278 @@
+<title>Inventário SISCOMAT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#F6F7F7; --surface:#FFFFFF; --ink:#1B2529; --muted:#5C6B70;
+  --line:#DDE3E4; --accent:#B3352C; --accent-ink:#FFFFFF;
+  --naval:#2F5D77; --chip-bg:#EDF0F0; --hl:#F9E8B8;
+  --sobra:#B26A00; --sobra-bg:#FCEEDB; --falta:#B3352C; --falta-bg:#F9E3E1;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141B1E; --surface:#1C2529; --ink:#E8ECED; --muted:#93A2A7;
+    --line:#2C383D; --accent:#D9564B; --accent-ink:#FFFFFF;
+    --naval:#7FB0C9; --chip-bg:#242F34; --hl:#5A4A17;
+    --sobra:#E8A24B; --sobra-bg:#3A2E1C; --falta:#E06A60; --falta-bg:#3C2321;
+}
+}
+:root[data-theme="dark"]{
+  --bg:#141B1E; --surface:#1C2529; --ink:#E8ECED; --muted:#93A2A7;
+  --line:#2C383D; --accent:#D9564B; --accent-ink:#FFFFFF;
+  --naval:#7FB0C9; --chip-bg:#242F34; --hl:#5A4A17;
+  --sobra:#E8A24B; --sobra-bg:#3A2E1C; --falta:#E06A60; --falta-bg:#3C2321;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 "Public Sans",system-ui,sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 20px 64px}
+header{display:flex;flex-wrap:wrap;align-items:end;gap:16px 28px;border-bottom:3px solid var(--accent);padding-bottom:18px;margin-bottom:20px}
+h1{font:800 clamp(24px,4vw,34px)/1.1 Archivo,sans-serif;margin:0;text-wrap:balance}
+h1 small{display:block;font:600 12px/1.4 "Public Sans",sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+.stats{display:flex;gap:24px;margin-left:auto}
+.stat{text-align:right}
+.stat b{display:block;font:700 24px/1 Archivo,sans-serif;font-variant-numeric:tabular-nums}
+.stat span{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.filters{position:sticky;top:0;background:var(--bg);padding:12px 0;z-index:20;display:flex;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--line);margin-bottom:4px;align-items:start}
+.combo{position:relative;flex:1;min-width:180px}
+.combo-btn{width:100%;display:flex;align-items:center;gap:8px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:9px 12px;font:inherit;cursor:pointer;text-align:left}
+.combo-btn .lbl{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.combo-btn .lbl.placeholder{color:var(--muted)}
+.combo-btn .caret{color:var(--muted);font-size:11px}
+.combo-btn .clear{color:var(--muted);border:0;background:none;cursor:pointer;font:600 14px/1 sans-serif;padding:0 2px}
+.combo-btn .clear:hover{color:var(--accent)}
+.combo[data-active] .combo-btn{border-color:var(--accent)}
+.combo-btn:focus-visible,.combo-panel input:focus{outline:2px solid var(--accent);outline-offset:1px}
+.combo-tag{position:absolute;top:-8px;left:10px;background:var(--bg);padding:0 5px;font:600 10.5px "Public Sans",sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.combo-panel{display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;min-width:240px;background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);z-index:30;overflow:hidden}
+.combo.open .combo-panel{display:block}
+.combo-panel input{width:100%;border:0;border-bottom:1px solid var(--line);background:var(--surface);color:var(--ink);padding:10px 12px;font:inherit}
+.combo-list{max-height:260px;overflow-y:auto;margin:0;padding:4px;list-style:none}
+.combo-list li{padding:7px 10px;border-radius:5px;cursor:pointer;font-size:14px}
+.combo-list li:hover,.combo-list li.hi{background:var(--chip-bg)}
+.combo-list li.sel{background:var(--accent);color:var(--accent-ink)}
+.combo-list li .n{float:right;color:var(--muted);font:400 12px "IBM Plex Mono",monospace}
+.combo-list li.sel .n{color:var(--accent-ink)}
+.combo-list .none{color:var(--muted);cursor:default}
+.count{color:var(--muted);font-size:13px;margin:10px 2px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.reset{border:1px solid var(--line);background:var(--surface);color:var(--accent);border-radius:6px;padding:4px 12px;font:600 12.5px "Public Sans",sans-serif;cursor:pointer}
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.tablewrap{overflow-x:auto}
+th{font:600 11.5px "Public Sans",sans-serif;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);text-align:left;padding:10px 14px;border-bottom:2px solid var(--line)}
+td{padding:9px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.q{font:500 14px "IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;text-align:right;width:1%}
+td.pat{font:400 13px "IBM Plex Mono",monospace;color:var(--muted);white-space:nowrap}
+.badge{display:inline-block;font:600 11px "Public Sans",sans-serif;letter-spacing:.05em;background:var(--chip-bg);color:var(--naval);border-radius:4px;padding:2px 8px;white-space:nowrap}
+.empty{padding:40px;text-align:center;color:var(--muted)}
+footer{margin-top:28px;color:var(--muted);font-size:12.5px}
+@media (max-width:640px){.stats{margin-left:0}.combo{min-width:100%}}
+.tabs{display:flex;gap:4px;margin-bottom:18px;border-bottom:1px solid var(--line)}
+.tab{border:0;background:none;color:var(--muted);font:600 14px "Public Sans",sans-serif;padding:10px 16px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px}
+.tab[aria-selected=true]{color:var(--ink);border-bottom-color:var(--accent)}
+.tab:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+section[hidden]{display:none}
+td.sobra,td.falta{font:500 14px "IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;text-align:right;width:1%;white-space:nowrap}
+td.sobra span{background:var(--sobra-bg);color:var(--sobra);border-radius:4px;padding:2px 8px;font-weight:600}
+td.falta span{background:var(--falta-bg);color:var(--falta);border-radius:4px;padding:2px 8px;font-weight:600}
+.legend{display:flex;gap:14px;margin:10px 2px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px;font-style:normal}
+.legend .lo i{background:var(--sobra)}
+.legend .lf i{background:var(--falta)}
+.confnote{color:var(--muted);font-size:13px;margin:2px 2px 12px;max-width:70ch}
+</style>
+<div class="wrap">
+<header>
+  <h1><small>SISCOMAT · Controle de Materiais</small>Inventário SISCOMAT</h1>
+  <div class="stats">
+    <div class="stat"><b id="stItens">0</b><span>itens</span></div>
+    <div class="stat"><b id="stQtde">0</b><span>unid. físicas</span></div>
+    <div class="stat"><b id="stUn">0</b><span>viaturas/locais</span></div>
+  </div>
+</header>
+<div class="tabs" role="tablist">
+  <button class="tab" role="tab" id="tab-inv" aria-selected="true" aria-controls="pane-inv">Inventário SISCOMAT</button>
+  <button class="tab" role="tab" id="tab-conf" aria-selected="false" aria-controls="pane-conf">Conferência</button>
+</div>
+<section id="pane-inv" role="tabpanel" aria-labelledby="tab-inv">
+<div class="filters" id="filters"></div>
+<div class="count"><span id="count"></span><button class="reset" id="reset" hidden>Limpar filtros</button></div>
+<div class="tablewrap"><table>
+  <thead><tr><th style="text-align:right">Qtde</th><th>Material</th><th>Patrimônio</th><th>Localização</th><th>Unidade/Viatura</th></tr></thead>
+  <tbody id="tb"></tbody>
+</table></div>
+</section>
+<section id="pane-conf" role="tabpanel" aria-labelledby="tab-conf" hidden>
+<p class="confnote">Conferência física realizada nas viaturas ABR10 e ABR6: comparação entre o que consta no SISCOMAT e o que foi encontrado na realidade. Estes itens ainda não estão vinculados aos registros do inventário — a relação será feita em etapa posterior.</p>
+<div class="filters" id="filtersConf"></div>
+<div class="count"><span id="countConf"></span><button class="reset" id="resetConf" hidden>Limpar filtros</button></div>
+<div class="legend"><span class="lo"><i></i>Sobressalente (passando)</span><span class="lf"><i></i>Falta</span></div>
+<div class="tablewrap"><table>
+  <thead><tr><th>Unidade/Viatura</th><th>Item conferido</th><th style="text-align:right">Sobressalente</th><th style="text-align:right">Falta</th></tr></thead>
+  <tbody id="tbConf"></tbody>
+</table></div>
+</section>
+<footer>Gerado a partir do export do SISCOMAT em 20/08/2026. Dados estáticos embutidos na página — para atualizar, gere novamente a partir dos CSVs.</footer>
+</div>
+<script>
+const DATA = [{"unidade": "ABR10", "material": "BOIA CIRCULAR", "qtde": 1, "patrimonio": null, "local": "Carroceria Central"}, {"unidade": "ABR10", "material": "BOLSA AMARELA COM CORDA 11MM 40 METROS", "qtde": 1, "patrimonio": null, "local": "BOLSA DE SALVAMENTO"}, {"unidade": "ABR10", "material": "BOLSA DE APH", "qtde": 1, "patrimonio": null, "local": "Carroceria Esquerda"}, {"unidade": "ABR10", "material": "BVM ADULTO", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "ABR10", "material": "BVM INFANTIL", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "ABR10", "material": "CILINDRO DE OXIGENIO", "qtde": 1, "patrimonio": "86300", "local": "Carroceria Esquerda"}, {"unidade": "ABR10", "material": "COLAR CERVICAL ADULTO", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "ABR10", "material": "COLAR CERVICAL INFANTIL", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "ABR10", "material": "CORTADOR DE ANEL", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "ABR10", "material": "ESFIGMOMANOMETRO DIGITAL TELA DE CRISTAL", "qtde": 1, "patrimonio": "74882", "local": "Bolsa APH"}, {"unidade": "ABR10", "material": "ESTABILIZADOR DE CABEÇA (PAR)", "qtde": 1, "patrimonio": null, "local": "Carroceria Central"}, {"unidade": "ABR10", "material": "facao", "qtde": 1, "patrimonio": null, "local": "Carroceria Central"}, {"unidade": "ABR10", "material": "GRI GRI", "qtde": 1, "patrimonio": null, "local": "BOLSA DE SALVAMENTO"}, {"unidade": "ABR10", "material": "LANTERNA BUSCA E LOCALIZAÇÃO", "qtde": 1, "patrimonio": null, "local": "ABR"}, {"unidade": "ABR10", "material": "LONA PARA PALCO DE MATERIAIS", "qtde": 1, "patrimonio": null, "local": "Carroceria Central"}, {"unidade": "ABR10", "material": "MOSQUETAO ASSIMETRICO DE ACO", "qtde": 1, "patrimonio": null, "local": "BOLSA DE SALVAMENTO"}, {"unidade": "ABR10", "material": "PE DE CABRA", "qtde": 1, "patrimonio": null, "local": "Carroceria Central"}, {"unidade": "ABR10", "material": "POCKET MASK", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "ABR10", "material": "PULSOXIMETRO DE DEDO", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "ABR10", "material": "ROUPA DE PROTEÇÃO LARANJA", "qtde": 1, "patrimonio": null, "local": "Carroceria Central"}, {"unidade": "ABR10", "material": "ROUPA SANITARIA COM BOTA", "qtde": 1, "patrimonio": null, "local": "Carroceria Central"}, {"unidade": "ABR10", "material": "SACO CINZA PARA CADAVER COM ZIPER", "qtde": 1, "patrimonio": null, "local": "Carroceria Central"}, {"unidade": "ABR10", "material": "SACO PRETO PARA CADAVER COM ZIPER", "qtde": 1, "patrimonio": null, "local": "Carroceria Central"}, {"unidade": "ABR10", "material": "TALA MOLDAVEL AZUL", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "ABR10", "material": "TALA MOLDAVEL AZUL", "qtde": 1, "patrimonio": null, "local": "BOLSA DE SALVAMENTO"}, {"unidade": "ABR10", "material": "TALA MOLDAVEL LARANJA", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "ABR10", "material": "TALA MOLDAVEL ROXA", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "ABR10", "material": "TALA MOLDAVEL VERDE", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "ABR10", "material": "TESOURA PONTA ROMBA", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "ABR10", "material": "TIRANTE ARANHA", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "ABR10", "material": "TORNIQUETE TATICO", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "ABR10", "material": "PEDRA DE LASTRO DE 2KG", "qtde": 16, "patrimonio": null, "local": "Carroceria Direita"}, {"unidade": "ABR10", "material": "BLOCANTE BASIC AB-20 ANTHRON", "qtde": 2, "patrimonio": null, "local": "BOLSA DE SALVAMENTO"}, {"unidade": "ABR10", "material": "CABO DE FUNDO PARA MERGULHO", "qtde": 2, "patrimonio": null, "local": "Carroceria Central"}, {"unidade": "ABR10", "material": "CADEIRINHA DE SALVAMENTO SINGING ROCK COM BLOCANTE VENTRAL", "qtde": 2, "patrimonio": null, "local": "Carroceria Central"}, {"unidade": "ABR10", "material": "COLETE CLASSE V", "qtde": 2, "patrimonio": null, "local": "Carroceria Central"}, {"unidade": "ABR10", "material": "KIT TROCA DE VELA( CHAVE, ALICATE E VELA)", "qtde": 2, "patrimonio": null, "local": "Carroceria Central"}, {"unidade": "ABR10", "material": "LUVA DE SALVAMENTO PRETA", "qtde": 2, "patrimonio": null, "local": "BOLSA DE SALVAMENTO"}, {"unidade": "ABR10", "material": "MOSQUETAO SIMETRICO DE ALUMINIO", "qtde": 2, "patrimonio": null, "local": "BOLSA DE SALVAMENTO"}, {"unidade": "ABR10", "material": "OITO DE RESGATE DE ACO", "qtde": 2, "patrimonio": null, "local": "BOLSA DE SALVAMENTO"}, {"unidade": "ABR10", "material": "RESCUE AMARELO", "qtde": 2, "patrimonio": null, "local": "Carroceria Central"}, {"unidade": "ABR10", "material": "ROLDANA DUPLA ANTRHON", "qtde": 2, "patrimonio": null, "local": "BOLSA DE SALVAMENTO"}, {"unidade": "ABR10", "material": "ROLDANA PEQUENA AZUL", "qtde": 2, "patrimonio": null, "local": "BOLSA DE SALVAMENTO"}, {"unidade": "ABR10", "material": "ROLDANA SIMPLES ANTHRON", "qtde": 2, "patrimonio": null, "local": "BOLSA DE SALVAMENTO"}, {"unidade": "ABR10", "material": "STOP DESCENSOR", "qtde": 2, "patrimonio": null, "local": "BOLSA DE SALVAMENTO"}, {"unidade": "ABR10", "material": "BACKPACK", "qtde": 4, "patrimonio": null, "local": "Carroceria Direita"}, {"unidade": "ABR10", "material": "BLOCANTE DE PUNHO", "qtde": 4, "patrimonio": null, "local": "BOLSA DE SALVAMENTO"}, {"unidade": "ABR10", "material": "CABO DA VIDA", "qtde": 4, "patrimonio": null, "local": "BOLSA DE SALVAMENTO"}, {"unidade": "ABR10", "material": "CAPACETE DE SALVAMENTO AMARELO", "qtde": 4, "patrimonio": null, "local": "Carroceria Central"}, {"unidade": "ABR10", "material": "CILINDRO DE MERGULHO S80", "qtde": 4, "patrimonio": null, "local": "Carroceria Direita"}, {"unidade": "ABR10", "material": "CINTO DE LASTRO", "qtde": 4, "patrimonio": null, "local": "Carroceria Direita"}, {"unidade": "ABR10", "material": "CONJUNTO REGULADOR DE MERGULHO", "qtde": 4, "patrimonio": null, "local": "Carroceria Direita"}, {"unidade": "ABR10", "material": "LONGE PARA CADEIRINHA", "qtde": 4, "patrimonio": null, "local": "BOLSA DE SALVAMENTO"}, {"unidade": "ABR10", "material": "MOSQUETAO SIMETRICO DE ACO", "qtde": 4, "patrimonio": null, "local": "BOLSA DE SALVAMENTO"}, {"unidade": "ABR10", "material": "FITA TUBULAR", "qtde": 5, "patrimonio": null, "local": "BOLSA DE SALVAMENTO"}, {"unidade": "ABR10", "material": "MOSQUETAO ASSIMETRICO DE ALUMINIO", "qtde": 5, "patrimonio": null, "local": "BOLSA DE SALVAMENTO"}, {"unidade": "ABR6", "material": "BOIA CIRCULAR", "qtde": 1, "patrimonio": null, "local": "CARROCERIA"}, {"unidade": "ABR6", "material": "BOIA DE ARINQUE", "qtde": 1, "patrimonio": null, "local": "CARROCERIA"}, {"unidade": "ABR6", "material": "CABO SOLTEIRO 12MM 16M", "qtde": 1, "patrimonio": null, "local": "CARROCERIA"}, {"unidade": "ABR6", "material": "CAPACETE DE SALVAMENTO AMARELO", "qtde": 1, "patrimonio": null, "local": "CARROCERIA"}, {"unidade": "ABR6", "material": "ENXADAO", "qtde": 1, "patrimonio": null, "local": "CARROCERIA"}, {"unidade": "ABR6", "material": "ESCALER", "qtde": 1, "patrimonio": null, "local": "CARROCERIA"}, {"unidade": "ABR6", "material": "facao", "qtde": 1, "patrimonio": null, "local": "CARROCERIA"}, {"unidade": "ABR6", "material": "FITA COM CATRACA PEQUENA", "qtde": 1, "patrimonio": null, "local": "CARROCERIA"}, {"unidade": "ABR6", "material": "FITA DE CARGA PARA AGM", "qtde": 1, "patrimonio": null, "local": "CARROCERIA"}, {"unidade": "ABR6", "material": "PA BICO REDONDO", "qtde": 1, "patrimonio": null, "local": "CARROCERIA"}, {"unidade": "ABR6", "material": "PICARETA", "qtde": 1, "patrimonio": null, "local": "CARROCERIA"}, {"unidade": "ABR6", "material": "SACO PRETO PARA CADAVER COM ZIPER", "qtde": 1, "patrimonio": null, "local": "CARROCERIA"}, {"unidade": "ABR6", "material": "CILINDRO DE MERGULHO S80", "qtde": 10, "patrimonio": null, "local": "CARROCERIA"}, {"unidade": "ABR6", "material": "BACKPACK", "qtde": 2, "patrimonio": null, "local": "CARROCERIA"}, {"unidade": "ABR6", "material": "BOMBONA DE MARCAÇÃO", "qtde": 2, "patrimonio": null, "local": "CARROCERIA"}, {"unidade": "ABR6", "material": "CORDA 12,5MM 45 METROS", "qtde": 2, "patrimonio": null, "local": "CARROCERIA"}, {"unidade": "ABR6", "material": "MANGUEIRA COMBUSTÍVEL MOTOR DE POPA", "qtde": 2, "patrimonio": null, "local": "CARROCERIA"}, {"unidade": "ABR6", "material": "MOTOR DE POPA HIDEA", "qtde": 2, "patrimonio": null, "local": "CARROCERIA"}, {"unidade": "ABR6", "material": "REMO", "qtde": 2, "patrimonio": null, "local": "CARROCERIA"}, {"unidade": "ABR6", "material": "RESCUE AMARELO", "qtde": 2, "patrimonio": null, "local": "CARROCERIA"}, {"unidade": "ABR6", "material": "TANQUE DE COMBUSTIVEL DE 24L", "qtde": 2, "patrimonio": null, "local": "CARROCERIA"}, {"unidade": "ABR6", "material": "CONJUNTO REGULADOR DE MERGULHO", "qtde": 4, "patrimonio": null, "local": "CARROCERIA"}, {"unidade": "ABR6", "material": "COLETE CLASSE IV", "qtde": 6, "patrimonio": null, "local": "CARROCERIA"}, {"unidade": "ESCALER", "material": "MANGUEIRA COMBUSTÍVEL MOTOR DE POPA", "qtde": 1, "patrimonio": null, "local": "ESCALER"}, {"unidade": "ESCALER", "material": "TANQUE DE COMBUSTIVEL DE 24L", "qtde": 1, "patrimonio": null, "local": "ESCALER"}, {"unidade": "ESCALER", "material": "REMO", "qtde": 2, "patrimonio": null, "local": "ESCALER"}, {"unidade": "FLEX GBS", "material": "BOLSA DE APH", "qtde": 1, "patrimonio": null, "local": "FLEX GBS"}, {"unidade": "FLEX GBS", "material": "BVM ADULTO", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "FLEX GBS", "material": "BVM INFANTIL", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "FLEX GBS", "material": "CILINDRO DE OXIGENIO COM FLUXIMETRO - WHITE MED", "qtde": 1, "patrimonio": "532241", "local": "FLEX GBS"}, {"unidade": "FLEX GBS", "material": "COLAR CERVICAL ADULTO", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "FLEX GBS", "material": "COLAR CERVICAL INFANTIL", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "FLEX GBS", "material": "CONJUNTO GPS GARMIN", "qtde": 1, "patrimonio": null, "local": "FLEX GBS"}, {"unidade": "FLEX GBS", "material": "ESFIGMOMANOMETRO DIGITAL TELA DE CRISTAL", "qtde": 1, "patrimonio": "74882", "local": "Bolsa APH"}, {"unidade": "FLEX GBS", "material": "FOLE PARA ENCHER BOTE", "qtde": 1, "patrimonio": null, "local": "FLEX GBS"}, {"unidade": "FLEX GBS", "material": "PULSOXIMETRO DE DEDO", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "FLEX GBS", "material": "RESCUE AMARELO", "qtde": 1, "patrimonio": null, "local": "FLEX GBS"}, {"unidade": "FLEX GBS", "material": "SACO CINZA PARA CADAVER COM ZIPER", "qtde": 1, "patrimonio": null, "local": "FLEX GBS"}, {"unidade": "FLEX GBS", "material": "SUGADOR DE ESPUMA", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "FLEX GBS", "material": "TALA MOLDAVEL AZUL", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "FLEX GBS", "material": "TALA MOLDAVEL LARANJA", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "FLEX GBS", "material": "TALA MOLDAVEL ROXA", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "FLEX GBS", "material": "TALA MOLDAVEL VERDE", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "FLEX GBS", "material": "TESOURA PONTA ROMBA", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "FLEX GBS", "material": "TIRANTE AMARELO DE PRANCHA", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "FLEX GBS", "material": "TIRANTE VERDE DE PRANCHA", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "FLEX GBS", "material": "TIRANTE VERMELHO DE PRANCHA", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "FLEX GBS", "material": "TORNIQUETE TATICO", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "FLEX GBS", "material": "BACKPACK", "qtde": 2, "patrimonio": null, "local": "FLEX GBS"}, {"unidade": "FLEX GBS", "material": "BOIA CIRCULAR", "qtde": 2, "patrimonio": null, "local": "FLEX GBS"}, {"unidade": "FLEX GBS", "material": "CABO DE FUNDO PARA MERGULHO", "qtde": 2, "patrimonio": null, "local": "FLEX GBS"}, {"unidade": "FLEX GBS", "material": "CILINDRO DE MERGULHO S80", "qtde": 2, "patrimonio": null, "local": "FLEX GBS"}, {"unidade": "FLEX GBS", "material": "CINTO DE LASTRO", "qtde": 2, "patrimonio": null, "local": "FLEX GBS"}, {"unidade": "FLEX GBS", "material": "COLETE CLASSE IV", "qtde": 2, "patrimonio": null, "local": "FLEX GBS"}, {"unidade": "FLEX GBS", "material": "CONJUNTO REGULADOR DE MERGULHO", "qtde": 2, "patrimonio": null, "local": "FLEX GBS"}, {"unidade": "FLEX GBS", "material": "CORDA 10,5MM 15 METROS", "qtde": 2, "patrimonio": null, "local": "FLEX GBS"}, {"unidade": "FLEX GBS", "material": "REMO", "qtde": 2, "patrimonio": null, "local": "FLEX GBS"}, {"unidade": "FLEX GBS", "material": "PEDRA DE LASTRO DE 2KG", "qtde": 8, "patrimonio": null, "local": "FLEX GBS"}, {"unidade": "L1", "material": "ASPIRADOR MANUAL", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "L1", "material": "BOLSA DE APH", "qtde": 1, "patrimonio": null, "local": "LANCHA RAPIDA L1"}, {"unidade": "L1", "material": "BVM ADULTO", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "L1", "material": "BVM INFANTIL", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "L1", "material": "CILINDRO DE OXIGENIO", "qtde": 1, "patrimonio": "86300", "local": "LANCHA RAPIDA L1"}, {"unidade": "L1", "material": "COLAR CERVICAL ADULTO", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "L1", "material": "COLAR CERVICAL INFANTIL", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "L1", "material": "DECO MARKER", "qtde": 1, "patrimonio": null, "local": "GAVETA ESQUERDA"}, {"unidade": "L1", "material": "ESFIGMOMANOMETRO DIGITAL TELA DE CRISTAL", "qtde": 1, "patrimonio": "74882", "local": "Bolsa APH"}, {"unidade": "L1", "material": "LANTERNA BUSCA E LOCALIZAÇÃO", "qtde": 1, "patrimonio": null, "local": "LANCHA RAPIDA L1"}, {"unidade": "L1", "material": "POCKET MASK", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "L1", "material": "PRANCHA VERMELHA", "qtde": 1, "patrimonio": null, "local": "LANCHA RAPIDA L1"}, {"unidade": "L1", "material": "PULSOXIMETRO DE DEDO", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "L1", "material": "RESCUE AMARELO", "qtde": 1, "patrimonio": null, "local": "LANCHA RAPIDA L1"}, {"unidade": "L1", "material": "SISTEMA PARA BUSCA CIRCULAR (POITA, DEFENSA, CABO E BOIA)", "qtde": 1, "patrimonio": null, "local": "LANCHA RAPIDA L1"}, {"unidade": "L1", "material": "TALA MOLDAVEL AZUL", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "L1", "material": "TALA MOLDAVEL LARANJA", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "L1", "material": "TALA MOLDAVEL ROXA", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "L1", "material": "TALA MOLDAVEL VERDE", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "L1", "material": "TESOURA PONTA ROMBA", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "L1", "material": "TIRANTE ARANHA", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "L1", "material": "TORNIQUETE TATICO", "qtde": 1, "patrimonio": null, "local": "Bolsa APH"}, {"unidade": "L1", "material": "ÂNCORA DANFORTH", "qtde": 1, "patrimonio": null, "local": "LANCHA RAPIDA L1"}, {"unidade": "L1", "material": "PEDRA DE LASTRO DE 2KG", "qtde": 16, "patrimonio": null, "local": "LANCHA RAPIDA L1"}, {"unidade": "L1", "material": "BOIA CIRCULAR", "qtde": 2, "patrimonio": null, "local": "LANCHA RAPIDA L1"}, {"unidade": "L1", "material": "CABO DE FUNDO PARA MERGULHO", "qtde": 2, "patrimonio": null, "local": "GAVETA ESQUERDA"}, {"unidade": "L1", "material": "CINTO DE LASTRO", "qtde": 2, "patrimonio": null, "local": "GAVETA ESQUERDA"}, {"unidade": "L1", "material": "CINTO DE LASTRO", "qtde": 2, "patrimonio": null, "local": "LANCHA RAPIDA L1"}, {"unidade": "L1", "material": "COLETE CLASSE V", "qtde": 2, "patrimonio": null, "local": "LANCHA RAPIDA L1"}, {"unidade": "L1", "material": "COLETE EQUILIBRADOR DE MERGULHO", "qtde": 2, "patrimonio": null, "local": "LANCHA RAPIDA L1"}, {"unidade": "L1", "material": "REMO", "qtde": 2, "patrimonio": null, "local": "LANCHA RAPIDA L1"}, {"unidade": "L1", "material": "CILINDRO DE MERGULHO S80", "qtde": 3, "patrimonio": null, "local": "GAVETA DIREITA"}, {"unidade": "L1", "material": "CILINDRO DE MERGULHO S80", "qtde": 3, "patrimonio": null, "local": "LANCHA RAPIDA L1"}, {"unidade": "L1", "material": "EXTINTOR DE INCÊNDIO ABC", "qtde": 3, "patrimonio": null, "local": "LANCHA RAPIDA L1"}, {"unidade": "L1", "material": "BACKPACK", "qtde": 4, "patrimonio": null, "local": "LANCHA RAPIDA L1"}, {"unidade": "L1", "material": "CONJUNTO REGULADOR DE MERGULHO", "qtde": 4, "patrimonio": null, "local": "LANCHA RAPIDA L1"}, {"unidade": "L11", "material": "CILINDRO EPR SCOTT 9L", "qtde": 1, "patrimonio": "268590", "local": "LANCHA DE INCENDIO L11"}, {"unidade": "L11", "material": "CILINDRO EPR SCOTT SAFETY 6,8L", "qtde": 1, "patrimonio": "3226", "local": "LANCHA DE INCENDIO L11"}, {"unidade": "L11", "material": "CONJUNTO PARA APOITAR ( 2 CABOS PARA FUNDEAR, 1 CABO COM PROTEÇÃO)", "qtde": 1, "patrimonio": null, "local": "LANCHA DE INCENDIO L11"}, {"unidade": "L11", "material": "ESGUICHO 1,5 CANO LONGO", "qtde": 1, "patrimonio": null, "local": "LANCHA DE INCENDIO L11"}, {"unidade": "L11", "material": "ESGUICHO ANTIGO 1,5", "qtde": 1, "patrimonio": null, "local": "LANCHA DE INCENDIO L11"}, {"unidade": "L11", "material": "GALÃO 25L DE LGE", "qtde": 1, "patrimonio": null, "local": "LANCHA DE INCENDIO L11"}, {"unidade": "L11", "material": "MOSQUETAO SIMETRICO DE ACO", "qtde": 1, "patrimonio": null, "local": "LANCHA DE INCENDIO L11"}, {"unidade": "L11", "material": "SUGADOR DE ESPUMA", "qtde": 1, "patrimonio": null, "local": "LANCHA DE INCENDIO L11"}, {"unidade": "L11", "material": "ADAPTADOR ROSCA FÊMEA 2,5", "qtde": 2, "patrimonio": null, "local": "LANCHA DE INCENDIO L11"}, {"unidade": "L11", "material": "BOLSA AMARELA COM CORDA 11MM 44 METROS", "qtde": 2, "patrimonio": null, "local": "LANCHA DE INCENDIO L11"}, {"unidade": "L11", "material": "CAPA DE APROXIMAÇÃO", "qtde": 2, "patrimonio": null, "local": "LANCHA DE INCENDIO L11"}, {"unidade": "L11", "material": "FITA TUBULAR", "qtde": 2, "patrimonio": null, "local": "LANCHA DE INCENDIO L11"}, {"unidade": "L11", "material": "MASCARA EPR SCOTT", "qtde": 2, "patrimonio": null, "local": "LANCHA DE INCENDIO L11"}, {"unidade": "L11", "material": "SUPORTE DORSAL EPR SCOTT NXG-7", "qtde": 2, "patrimonio": "69125", "local": "LANCHA DE INCENDIO L11"}, {"unidade": "L11", "material": "TRANSPORTADOR DE MANGUEIRA", "qtde": 2, "patrimonio": null, "local": "LANCHA DE INCENDIO L11"}, {"unidade": "L11", "material": "CHAVE DE MANGUEIRA", "qtde": 3, "patrimonio": null, "local": "LANCHA DE INCENDIO L11"}, {"unidade": "L11", "material": "CORDELETE 6MM", "qtde": 3, "patrimonio": null, "local": "LANCHA DE INCENDIO L11"}, {"unidade": "L11", "material": "REDUCAO DE 2,5\" PARA 1,5\"", "qtde": 3, "patrimonio": null, "local": "LANCHA DE INCENDIO L11"}, {"unidade": "L11", "material": "BOIA CIRCULAR", "qtde": 4, "patrimonio": null, "local": "LANCHA DE INCENDIO L11"}, {"unidade": "L11", "material": "COLETE SV CLASSE III", "qtde": 6, "patrimonio": null, "local": "LANCHA DE INCENDIO L11"}, {"unidade": "RESERVA TEC BUC", "material": "MACA TIPO CESTO", "qtde": 1, "patrimonio": "100347", "local": "RESERVA TECNICA BUC"}, {"unidade": "RESERVA TEC BUC", "material": "PRANCHA RIGIDA", "qtde": 1, "patrimonio": null, "local": "RESERVA TECNICA BUC"}, {"unidade": "RESERVA TEC BUC", "material": "COLETE EQUILIBRADOR DE MERGULHO", "qtde": 2, "patrimonio": null, "local": "RESERVA TECNICA BUC"}, {"unidade": "RESERVA TEC BUC", "material": "LANTERNA BUSCA E LOCALIZAÇÃO", "qtde": 2, "patrimonio": null, "local": "RESERVA TECNICA BUC"}, {"unidade": "RESERVA TEC BUC", "material": "SACO CINZA PARA CADAVER COM ZIPER", "qtde": 2, "patrimonio": null, "local": "RESERVA TECNICA BUC"}, {"unidade": "RESERVA TEC BUC", "material": "LANTERNA DE ANGULO RETO", "qtde": 4, "patrimonio": null, "local": "RESERVA TECNICA BUC"}];
+const $=s=>document.querySelector(s);
+const norm=s=>(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
+const esc=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+
+$("#stItens").textContent=DATA.length;
+$("#stQtde").textContent=DATA.reduce((a,d)=>a+d.qtde,0);
+$("#stUn").textContent=new Set(DATA.map(d=>d.unidade)).size;
+
+// Contexto de filtros: um conjunto de comboboxes pesquisáveis por dataset
+// ctx = {data, filters, state, valueOf, render}
+function optionsFor(ctx,key){
+  // opções derivadas dos dados já filtrados pelas OUTRAS colunas, com contagem
+  const rows=ctx.data.filter(d=>ctx.filters.every(f=>f.key===key||!ctx.state[f.key]||ctx.valueOf(d,f.key)===ctx.state[f.key]));
+  const m=new Map();
+  rows.forEach(d=>{const v=ctx.valueOf(d,key); m.set(v,(m.get(v)||0)+1)});
+  return [...m.entries()].sort((a,b)=>String(a[0]).localeCompare(String(b[0]),"pt"));
+}
+
+function buildCombo(f,ctx){
+  const root=document.createElement("div");
+  root.className="combo"; root.id="combo-"+f.key;
+  root.innerHTML=`
+    <span class="combo-tag">${f.tag}</span>
+    <button class="combo-btn" aria-haspopup="listbox" aria-expanded="false">
+      <span class="lbl placeholder">${f.all}</span>
+      <span class="clear" hidden title="Limpar">×</span>
+      <span class="caret">▼</span>
+    </button>
+    <div class="combo-panel">
+      <input type="text" placeholder="Buscar ${f.tag.toLowerCase()}…" aria-label="Buscar ${f.tag}">
+      <ul class="combo-list" role="listbox"></ul>
+    </div>`;
+  const btn=root.querySelector(".combo-btn"), lbl=root.querySelector(".lbl"),
+        clear=root.querySelector(".clear"), inp=root.querySelector("input"),
+        list=root.querySelector(".combo-list");
+
+  function renderList(){
+    const q=norm(inp.value.trim());
+    const opts=optionsFor(ctx,f.key).filter(([v])=>!q||norm(String(v)).includes(q));
+    list.innerHTML=opts.length
+      ? opts.map(([v,n])=>`<li role="option" data-v="${esc(v)}" class="${ctx.state[f.key]===v?"sel":""}">${esc(v)}<span class="n">${n}</span></li>`).join("")
+      : `<li class="none">Nada encontrado</li>`;
+  }
+  function open(){ closeAll(); root.classList.add("open"); btn.setAttribute("aria-expanded","true"); inp.value=""; renderList(); inp.focus(); }
+  function close(){ root.classList.remove("open"); btn.setAttribute("aria-expanded","false"); }
+  function set(v){
+    ctx.state[f.key]=v;
+    if(v){ lbl.textContent=v; lbl.classList.remove("placeholder"); clear.hidden=false; root.dataset.active=""; }
+    else { lbl.textContent=f.all; lbl.classList.add("placeholder"); clear.hidden=true; delete root.dataset.active; }
+    close(); ctx.render();
+  }
+  btn.addEventListener("click",e=>{ if(e.target===clear){ set(null); e.stopPropagation(); return; } root.classList.contains("open")?close():open(); });
+  inp.addEventListener("input",renderList);
+  inp.addEventListener("keydown",e=>{
+    if(e.key==="Escape") close();
+    if(e.key==="Enter"){ const first=list.querySelector("li[data-v]"); if(first) set(first.dataset.v); }
+  });
+  list.addEventListener("click",e=>{ const li=e.target.closest("li[data-v]"); if(li) set(li.dataset.v===ctx.state[f.key]?null:li.dataset.v); });
+  root._close=close; root._set=set;
+  return root;
+}
+function closeAll(){ document.querySelectorAll(".combo.open").forEach(c=>c._close()); }
+document.addEventListener("click",e=>{ if(!e.target.closest(".combo")) closeAll(); });
+
+// ---- Aba 1: Inventário ----
+const ctxInv={
+  data:DATA,
+  filters:[
+    {key:"material",  tag:"Material",        all:"Todos os materiais"},
+    {key:"patrimonio",tag:"Patrimônio",      all:"Todos os patrimônios"},
+    {key:"local",     tag:"Localização",     all:"Todas as localizações"},
+    {key:"unidade",   tag:"Unidade/Viatura", all:"Todas as unidades"},
+  ],
+  state:{},
+  valueOf:(d,key)=>key==="patrimonio"?(d.patrimonio||"—"):d[key],
+  render:renderTable,
+};
+const combos={};
+ctxInv.filters.forEach(f=>{ const c=buildCombo(f,ctxInv); combos[f.key]=c; $("#filters").append(c); });
+
+$("#reset").onclick=()=>ctxInv.filters.forEach(f=>combos[f.key]._set(null));
+
+function renderTable(){
+  const s=ctxInv.state;
+  const rows=DATA.filter(d=>ctxInv.filters.every(f=>!s[f.key]||ctxInv.valueOf(d,f.key)===s[f.key]));
+  $("#reset").hidden=!ctxInv.filters.some(f=>s[f.key]);
+  $("#count").textContent=rows.length+" de "+DATA.length+" itens";
+  $("#tb").innerHTML=rows.length?rows.map(d=>
+    `<tr><td class="q">${d.qtde}</td><td>${esc(d.material)}</td><td class="pat">${d.patrimonio?esc(d.patrimonio):"—"}</td><td>${esc(d.local)}</td><td><span class="badge">${esc(d.unidade)}</span></td></tr>`
+  ).join(""):`<tr><td colspan="5" class="empty">Nenhum material encontrado. Limpe os filtros para ver tudo.</td></tr>`;
+}
+renderTable();
+
+// ---- Aba Conferência (dados apartados do SISCOMAT) ----
+const CONF=[
+  {v:"ABR10",item:"Estabilizador de cabeça",sobra:1},
+  {v:"ABR10",item:"Saco para cadáver cinza infantil",sobra:1},
+  {v:"ABR10",item:"Tesoura ponta romba",sobra:1},
+  {v:"ABR10",item:"Cabo da vida",sobra:1},
+  {v:"ABR10",item:"Cilindro de mergulho S80",sobra:1},
+  {v:"ABR10",item:"Cordeletes para estribo",sobra:3},
+  {v:"ABR10",item:"Maca do tipo lona encerada",sobra:1},
+  {v:"ABR10",item:"Roupa sanitária com bota branca",falta:1},
+  {v:"ABR10",item:"Saco para cadáver preto",falta:1},
+  {v:"ABR10",item:"Tala moldável azul",falta:1},
+  {v:"ABR10",item:"Colete classe V",falta:1},
+  {v:"ABR10",item:"Longe para cadeirinha",falta:2},
+  {v:"ABR10",item:"Mosquetões simétricos em aço",falta:3},
+  {v:"ABR10",item:"Fita tubular",falta:1},
+  {v:"ABR6",item:"Capacete de salvamento amarelo",sobra:1},
+  {v:"ABR6",item:"Remo",sobra:1},
+  {v:"ABR6",item:"Coletes classe V",sobra:6},
+  {v:"ABR6",item:"Tripé de resgate",sobra:1},
+  {v:"ABR6",item:"Cinto de lastro com 3 pedras de 2kg",sobra:1},
+  {v:"ABR6",item:"Tala rocha",sobra:1},
+  {v:"ABR6",item:"Tala azul",sobra:1},
+  {v:"ABR6",item:"Maca do tipo sexto",sobra:1},
+  {v:"ABR6",item:"Saco para cadáver cinza",sobra:1},
+  {v:"ABR6",item:"Cabo solteiro 12mm de 16m",falta:1},
+  {v:"ABR6",item:"Cilindros S80",falta:2},
+  {v:"ABR6",item:"Cordas de 12,5mm de 45m",falta:2},
+  {v:"ABR6",item:"Mangueiras de combustível de motor de popa",falta:2},
+  {v:"ABR6",item:"Motores de popa",falta:2},
+  {v:"ABR6",item:"Rescue amarelo",falta:2},
+  {v:"ABR6",item:"Tanques de combustível",falta:2},
+  {v:"ABR6",item:"Conjunto regulador de mergulho",falta:4},
+  {v:"ABR6",item:"Coletes classe IV",falta:4},
+];
+const ctxConf={
+  data:CONF,
+  filters:[
+    {key:"v",   tag:"Unidade/Viatura", all:"Todas as unidades"},
+    {key:"item",tag:"Item",            all:"Todos os itens"},
+  ],
+  state:{},
+  valueOf:(d,key)=>d[key],
+  render:renderConf,
+};
+const combosConf={};
+ctxConf.filters.forEach(f=>{ const c=buildCombo(f,ctxConf); combosConf[f.key]=c; $("#filtersConf").append(c); });
+$("#resetConf").onclick=()=>ctxConf.filters.forEach(f=>combosConf[f.key]._set(null));
+
+function renderConf(){
+  const s=ctxConf.state;
+  const rows=CONF.filter(d=>ctxConf.filters.every(f=>!s[f.key]||d[f.key]===s[f.key]));
+  $("#resetConf").hidden=!ctxConf.filters.some(f=>s[f.key]);
+  $("#countConf").textContent=rows.length+" de "+CONF.length+" itens";
+  $("#tbConf").innerHTML=rows.length?rows.map(c=>
+    `<tr><td><span class="badge">${esc(c.v)}</span></td><td>${esc(c.item)}</td>`+
+    `<td class="sobra">${c.sobra?`<span>+${c.sobra}</span>`:"—"}</td>`+
+    `<td class="falta">${c.falta?`<span>−${c.falta}</span>`:"—"}</td></tr>`
+  ).join(""):`<tr><td colspan="4" class="empty">Nenhum item encontrado. Limpe os filtros para ver tudo.</td></tr>`;
+}
+renderConf();
+
+const panes={ "tab-inv":"pane-inv", "tab-conf":"pane-conf" };
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected",String(x===t)));
+  Object.entries(panes).forEach(([tab,pane])=>document.getElementById(pane).hidden=(tab!==t.id));
+});
+</script>
