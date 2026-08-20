@@ -1,3 +1,10 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
 <title>Inventário SISCOMAT</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -79,6 +86,28 @@ td.falta span{background:var(--falta-bg);color:var(--falta);border-radius:4px;pa
 .legend .lo i{background:var(--sobra)}
 .legend .lf i{background:var(--falta)}
 .confnote{color:var(--muted);font-size:13px;margin:2px 2px 12px;max-width:70ch}
+@media (max-width:640px){
+  .wrap{padding:18px 14px 48px}
+  header{gap:12px;padding-bottom:14px;margin-bottom:14px}
+  .stats{gap:16px}
+  .stat b{font-size:19px}
+  .stat span{font-size:10px}
+  .tabs{overflow-x:auto}
+  .tab{padding:9px 12px;white-space:nowrap}
+  .filters{position:static}
+  /* tabela vira cartões empilhados */
+  table,tbody,td{display:block;width:100%}
+  thead{display:none}
+  table{border:0;background:none}
+  tr{display:flex;flex-direction:column;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:8px;margin-bottom:10px;padding:12px 14px}
+  td{border:0;padding:0;text-align:left}
+  td.m{order:-1;font-weight:600;font-size:15px}
+  td.m::before{display:none !important}
+  td.q,td.sobra,td.falta{text-align:left;width:auto;white-space:normal}
+  td[data-label]::before{content:attr(data-label);display:block;font:600 10px "Public Sans",sans-serif;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:1px}
+  td:empty,td.hide-empty{display:none}
+  tr .empty{border:0}
+}
 </style>
 <div class="wrap">
 <header>
@@ -203,7 +232,7 @@ function renderTable(){
   $("#reset").hidden=!ctxInv.filters.some(f=>s[f.key]);
   $("#count").textContent=rows.length+" de "+DATA.length+" itens";
   $("#tb").innerHTML=rows.length?rows.map(d=>
-    `<tr><td class="q">${d.qtde}</td><td>${esc(d.material)}</td><td class="pat">${d.patrimonio?esc(d.patrimonio):"—"}</td><td>${esc(d.local)}</td><td><span class="badge">${esc(d.unidade)}</span></td></tr>`
+    `<tr><td class="q" data-label="Qtde">${d.qtde}</td><td class="m" data-label="Material">${esc(d.material)}</td><td class="pat" data-label="Patrimônio">${d.patrimonio?esc(d.patrimonio):"—"}</td><td data-label="Localização">${esc(d.local)}</td><td data-label="Unidade/Viatura"><span class="badge">${esc(d.unidade)}</span></td></tr>`
   ).join(""):`<tr><td colspan="5" class="empty">Nenhum material encontrado. Limpe os filtros para ver tudo.</td></tr>`;
 }
 renderTable();
@@ -263,9 +292,9 @@ function renderConf(){
   $("#resetConf").hidden=!ctxConf.filters.some(f=>s[f.key]);
   $("#countConf").textContent=rows.length+" de "+CONF.length+" itens";
   $("#tbConf").innerHTML=rows.length?rows.map(c=>
-    `<tr><td><span class="badge">${esc(c.v)}</span></td><td>${esc(c.item)}</td>`+
-    `<td class="sobra">${c.sobra?`<span>+${c.sobra}</span>`:"—"}</td>`+
-    `<td class="falta">${c.falta?`<span>−${c.falta}</span>`:"—"}</td></tr>`
+    `<tr><td data-label="Unidade/Viatura"><span class="badge">${esc(c.v)}</span></td><td class="m" data-label="Item conferido">${esc(c.item)}</td>`+
+    `<td class="sobra" data-label="Sobressalente">${c.sobra?`<span>+${c.sobra}</span>`:"—"}</td>`+
+    `<td class="falta" data-label="Falta">${c.falta?`<span>−${c.falta}</span>`:"—"}</td></tr>`
   ).join(""):`<tr><td colspan="4" class="empty">Nenhum item encontrado. Limpe os filtros para ver tudo.</td></tr>`;
 }
 renderConf();
@@ -276,3 +305,6 @@ document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
   Object.entries(panes).forEach(([tab,pane])=>document.getElementById(pane).hidden=(tab!==t.id));
 });
 </script>
+
+</body>
+</html>
