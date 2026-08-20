@@ -154,6 +154,8 @@ footer{margin-top:28px;color:var(--muted);font-size:12.5px}
     <span id="count">Carregando…</span>
     <button class="btn small" id="reset" hidden>Limpar filtros</button>
     <span style="flex:1"></span>
+    <button class="btn" id="expCsv" title="Baixar CSV dos itens filtrados">⬇ CSV</button>
+    <button class="btn" id="expPdf" title="Gerar PDF dos itens filtrados">⬇ PDF</button>
     <button class="btn primary" id="novoItem">+ Novo item</button>
   </div>
   <div class="legend">
@@ -316,8 +318,14 @@ $("#reset").onclick=()=>FILTERS.forEach(f=>combos[f.key]._set(null));
 const CONF_NEXT={conferido:"falta", falta:"nao_conferido", nao_conferido:"conferido"};
 const CONF_ICON={conferido:"✓", falta:"✗", nao_conferido:"—"};
 const CONF_TITLE={conferido:"Conferido", falta:"Falta", nao_conferido:"Não conferido"};
+function filteredRows(){
+  return ITENS.filter(d=>FILTERS.every(f=>!state[f.key]||valueOf(d,f.key)===state[f.key]));
+}
+function filtrosAtivos(){
+  return FILTERS.filter(f=>state[f.key]).map(f=>`${f.tag}: ${state[f.key]}`).join(" · ");
+}
 function renderTable(){
-  const rows=ITENS.filter(d=>FILTERS.every(f=>!state[f.key]||valueOf(d,f.key)===state[f.key]));
+  const rows=filteredRows();
   $("#reset").hidden=!FILTERS.some(f=>state[f.key]);
   $("#count").textContent=rows.length+" de "+ITENS.length+" itens";
   $("#tb").innerHTML=rows.length?rows.map(d=>`<tr>
@@ -332,6 +340,50 @@ function renderTable(){
     <td class="acts"><button class="btn small" onclick="editarItem(${d.id})">Editar</button> <button class="btn small danger" onclick="excluirItem(${d.id})">Excluir</button></td>
   </tr>`).join(""):`<tr><td colspan="7" class="empty">Nenhum material encontrado. Limpe os filtros para ver tudo.</td></tr>`;
 }
+
+// ---- Exportação (respeita filtros ativos) ----
+function hoje(){ return new Date().toLocaleDateString("pt-BR"); }
+$("#expCsv").onclick=()=>{
+  const rows=filteredRows();
+  const cell=v=>{ v=String(v??""); return /[";\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+  const linhas=[["Qtde","Material","Patrimônio","Localização","Unidade/Viatura","Conferido"]]
+    .concat(rows.map(d=>[d.qtde,d.material,d.patrimonio||"",d.localizacao,d.unidade,CONF_TITLE[d.conferido]]));
+  const csv="﻿"+linhas.map(l=>l.map(cell).join(";")).join("\r\n");
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
+  a.download=`siscomat_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click(); URL.revokeObjectURL(a.href);
+  toast(`CSV com ${rows.length} itens gerado`);
+};
+$("#expPdf").onclick=()=>{
+  const rows=filteredRows();
+  const filtros=filtrosAtivos();
+  const w=window.open("","_blank");
+  if(!w){ toast("Libere pop-ups para gerar o PDF"); return; }
+  w.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
+<title>Inventário SISCOMAT — ${hoje()}</title>
+<style>
+  body{font:12px/1.5 -apple-system,"Segoe UI",Roboto,sans-serif;color:#1B2529;margin:28px}
+  h1{font-size:18px;margin:0}
+  .sub{color:#5C6B70;font-size:11px;margin:4px 0 16px;border-bottom:2px solid #B3352C;padding-bottom:10px}
+  table{width:100%;border-collapse:collapse}
+  th{font-size:10px;text-transform:uppercase;letter-spacing:.06em;text-align:left;color:#5C6B70;border-bottom:2px solid #ccc;padding:5px 8px}
+  td{border-bottom:1px solid #e2e2e2;padding:5px 8px;vertical-align:top}
+  td.q{text-align:right;white-space:nowrap}
+  .c-conferido{color:#2E8B57;font-weight:700}
+  .c-falta{color:#B3352C;font-weight:700}
+  .c-nao_conferido{color:#888}
+  @media print{ @page{margin:14mm} }
+</style></head><body>
+<h1>Inventário SISCOMAT</h1>
+<div class="sub">Gerado em ${hoje()} · ${rows.length} itens · ${rows.reduce((a,d)=>a+d.qtde,0)} unidades físicas${filtros?` · Filtros — ${esc(filtros)}`:" · Relatório completo"}</div>
+<table><thead><tr><th style="text-align:right">Qtde</th><th>Material</th><th>Patrimônio</th><th>Localização</th><th>Unidade/Viatura</th><th>Conferido</th></tr></thead><tbody>
+${rows.map(d=>`<tr><td class="q">${d.qtde}</td><td>${esc(d.material)}</td><td>${d.patrimonio?esc(d.patrimonio):"—"}</td><td>${esc(d.localizacao)}</td><td>${esc(d.unidade)}</td><td class="c-${d.conferido}">${CONF_ICON[d.conferido]} ${CONF_TITLE[d.conferido]}</td></tr>`).join("")}
+</tbody></table>
+</body></html>`);
+  w.document.close();
+  w.onload=()=>{ w.focus(); w.print(); };
+};
 
 // ---- Mutações ----
 async function mudarQtde(id,delta){
