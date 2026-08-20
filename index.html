@@ -100,7 +100,8 @@ footer{margin-top:28px;color:var(--muted);font-size:12.5px}
 .modal .row>*{flex:1}
 .modal .actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
 /* cadastros */
-.cadgrid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.cadgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px}
+.modal input:disabled{opacity:.7;background:var(--chip-bg)}
 .cadcard{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px}
 .cadcard h2{font:700 16px Archivo,sans-serif;margin:0 0 12px}
 .cadcard ul{list-style:none;margin:0 0 12px;padding:0}
@@ -178,6 +179,14 @@ footer{margin-top:28px;color:var(--muted);font-size:12.5px}
       </div>
     </div>
     <div class="cadcard">
+      <h2>Materiais (catálogo)</h2>
+      <div class="addrow" style="margin-bottom:10px">
+        <input id="buscaMat" placeholder="Buscar material…" aria-label="Buscar material">
+      </div>
+      <ul id="listaMateriais" style="max-height:320px;overflow-y:auto"></ul>
+      <p style="font-size:12px;color:var(--muted);margin:8px 0 0">Renomear aqui muda o nome em todas as unidades. Materiais novos são criados pelo "+ Novo item".</p>
+    </div>
+    <div class="cadcard">
       <h2>Localizações</h2>
       <div class="addrow" style="margin-bottom:10px">
         <select id="cadUnidadeSel" aria-label="Unidade das localizações"></select>
@@ -205,13 +214,32 @@ footer{margin-top:28px;color:var(--muted);font-size:12.5px}
       <div><label for="fQtde">Qtde</label><input id="fQtde" type="number" min="0" value="1" required></div>
       <div><label for="fPat">Patrimônio (opcional)</label><input id="fPat"></div>
     </div>
-    <label for="fUnidade">Unidade/Viatura</label>
-    <select id="fUnidade" required></select>
-    <label for="fLocal">Localização</label>
-    <select id="fLocal" required></select>
+    <div id="grpDestino">
+      <label for="fUnidade">Unidade/Viatura</label>
+      <select id="fUnidade"></select>
+      <label for="fLocal">Localização</label>
+      <select id="fLocal"></select>
+    </div>
     <div class="actions">
       <button type="button" class="btn" id="cancelar">Cancelar</button>
       <button type="submit" class="btn primary" id="salvar">Salvar</button>
+    </div>
+  </form>
+</div>
+<div class="overlay" id="overlayMover">
+  <form class="modal" id="moverForm">
+    <h2>Mover material</h2>
+    <div id="mvInfo" style="font-size:13.5px;margin-bottom:4px"></div>
+    <div id="mvResumo" style="font-size:12.5px;color:var(--muted)"></div>
+    <label for="mvQtde">Quantidade a mover</label>
+    <input id="mvQtde" type="number" min="1" value="1" required>
+    <label for="mvUnidade">Unidade/Viatura de destino</label>
+    <select id="mvUnidade" required></select>
+    <label for="mvLocal">Localização de destino</label>
+    <select id="mvLocal" required></select>
+    <div class="actions">
+      <button type="button" class="btn" id="mvCancelar">Cancelar</button>
+      <button type="submit" class="btn primary">Mover</button>
     </div>
   </form>
 </div>
@@ -340,7 +368,7 @@ function renderTable(){
     <td data-label="Localização">${esc(d.localizacao)}</td>
     <td data-label="Unidade/Viatura"><span class="badge">${esc(d.unidade)}</span></td>
     <td data-label="Conferido" style="text-align:center"><button type="button" class="chkbtn ${d.conferido}" title="${CONF_TITLE[d.conferido]} — clique para alternar" onclick="ciclarConferido(${d.id})">${CONF_ICON[d.conferido]}</button></td>
-    <td class="acts"><button class="btn small" onclick="editarItem(${d.id})">Editar</button> <button class="btn small danger" onclick="excluirItem(${d.id})">Excluir</button></td>
+    <td class="acts"><button class="btn small" onclick="moverItem(${d.id})">Mover</button> <button class="btn small" onclick="editarItem(${d.id})">Editar</button> <button class="btn small danger" onclick="excluirItem(${d.id})">Excluir</button></td>
   </tr>`).join(""):`<tr><td colspan="7" class="empty">Nenhum material encontrado. Limpe os filtros para ver tudo.</td></tr>`;
 }
 
@@ -437,13 +465,18 @@ function abrirModal(item){
   $("#modalTitle").textContent=item?"Editar item":"Novo item";
   $("#dlMateriais").innerHTML=MATERIAIS.map(m=>`<option value="${esc(m.nome)}">`).join("");
   $("#fMaterial").value=item?item.material:"";
+  $("#fMaterial").disabled=!!item;
   $("#fQtde").value=item?item.qtde:1;
   $("#fPat").value=item?.patrimonio||"";
-  preencherSelectUnidades($("#fUnidade"),item?item.unidade_id:UNIDADES[0]?.id);
-  preencherSelectLocais($("#fUnidade").value,item?item.localizacao_id:null);
+  $("#grpDestino").style.display=item?"none":"";
+  if(!item){
+    preencherSelectUnidades($("#fUnidade"),UNIDADES[0]?.id);
+    preencherSelectLocais($("#fUnidade").value,null);
+  }
   atualizarResumo();
+  if(item) $("#fResumo").innerHTML+=`<br><i>Para renomear o material (vale para todas as unidades) ou movê-lo, use Cadastros ou o botão Mover.</i>`;
   $("#overlay").classList.add("open");
-  $("#fMaterial").focus();
+  (item?$("#fQtde"):$("#fMaterial")).focus();
 }
 function fecharModal(){ $("#overlay").classList.remove("open"); }
 $("#novoItem").onclick=()=>abrirModal(null);
@@ -458,34 +491,76 @@ async function resolverMaterialId(nome){
 }
 $("#itemForm").addEventListener("submit",async e=>{
   e.preventDefault();
-  const nome=$("#fMaterial").value.trim();
-  const body={
-    qtde:Number($("#fQtde").value),
-    patrimonio:$("#fPat").value.trim()||null,
-    localizacao_id:Number($("#fLocal").value),
-  };
-  if(!nome||!body.localizacao_id){ toast("Preencha material e localização"); return; }
   try{
     if(editandoId){
-      const it=ITENS.find(i=>i.id===editandoId);
-      if(norm(nome)!==norm(it.material)){
-        // nome alterado: se já existe no catálogo, realoca; senão renomeia o material em TODAS as unidades
-        const existente=MATERIAIS.find(m=>norm(m.nome)===norm(nome));
-        if(existente) body.material_id=existente.id;
-        else{
-          const outros=ITENS.filter(i=>i.material_id===it.material_id && i.id!==it.id).length;
-          if(outros && !confirm(`Renomear "${it.material}" para "${nome}"?\nO nome muda nas ${outros+1} alocações deste material (todas as unidades).`)) return;
-          await api(`/materiais?id=eq.${it.material_id}`,{method:"PATCH",body:JSON.stringify({nome})});
-        }
-      }
-      await api(`/itens?id=eq.${editandoId}`,{method:"PATCH",body:JSON.stringify(body)});
+      // Editar corrige apenas dados desta alocação — sem renome, sem movimentação
+      await api(`/itens?id=eq.${editandoId}`,{method:"PATCH",body:JSON.stringify({
+        qtde:Number($("#fQtde").value),
+        patrimonio:$("#fPat").value.trim()||null,
+      })});
     }else{
-      body.material_id=await resolverMaterialId(nome);
-      const jaExiste=ITENS.find(i=>i.material_id===body.material_id && i.localizacao_id===body.localizacao_id);
+      const nome=$("#fMaterial").value.trim();
+      const localizacao_id=Number($("#fLocal").value);
+      if(!nome||!localizacao_id){ toast("Preencha material e localização"); return; }
+      const material_id=await resolverMaterialId(nome);
+      const jaExiste=ITENS.find(i=>i.material_id===material_id && i.localizacao_id===localizacao_id);
       if(jaExiste && !confirm(`"${nome}" já tem ${jaExiste.qtde} unidade(s) nessa localização.\nCriar outra alocação mesmo assim? (Para somar, use os botões − / + na tabela.)`)) return;
-      await api("/itens",{method:"POST",body:JSON.stringify(body)});
+      await api("/itens",{method:"POST",body:JSON.stringify({
+        material_id, localizacao_id,
+        qtde:Number($("#fQtde").value),
+        patrimonio:$("#fPat").value.trim()||null,
+      })});
     }
     fecharModal(); await loadAll(); toast(editandoId?"Item atualizado":"Item cadastrado");
+  }catch(e2){ fail(e2); }
+});
+
+// ---- Mover (movimentação de estoque, com histórico) ----
+let movendoId=null;
+function moverItem(id){
+  const it=ITENS.find(i=>i.id===id); if(!it) return;
+  movendoId=id;
+  $("#mvInfo").innerHTML=`<b>${esc(it.material)}</b><br>Origem: ${esc(it.unidade)} · ${esc(it.localizacao)} — <b>${it.qtde} disponível(is)</b>`;
+  $("#mvResumo").innerHTML=resumoMaterial(it.material);
+  $("#mvQtde").value=it.qtde; $("#mvQtde").max=it.qtde;
+  preencherSelectUnidades($("#mvUnidade"),it.unidade_id);
+  preencherSelectLocaisEm($("#mvLocal"),it.unidade_id,null);
+  $("#overlayMover").classList.add("open");
+  $("#mvQtde").focus();
+}
+function preencherSelectLocaisEm(sel,unidadeId,val){
+  const ls=LOCAIS.filter(l=>l.unidade_id===Number(unidadeId));
+  sel.innerHTML=ls.length
+    ? ls.map(l=>`<option value="${l.id}" ${l.id===val?"selected":""}>${esc(l.nome)}</option>`).join("")
+    : `<option value="">— cadastre uma localização para esta unidade —</option>`;
+}
+$("#mvUnidade").addEventListener("change",()=>preencherSelectLocaisEm($("#mvLocal"),$("#mvUnidade").value,null));
+function fecharMover(){ $("#overlayMover").classList.remove("open"); movendoId=null; }
+$("#mvCancelar").onclick=fecharMover;
+$("#overlayMover").addEventListener("click",e=>{ if(e.target===$("#overlayMover")) fecharMover(); });
+$("#moverForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const it=ITENS.find(i=>i.id===movendoId); if(!it) return;
+  const n=Number($("#mvQtde").value);
+  const destino=Number($("#mvLocal").value);
+  if(!destino){ toast("Escolha a localização de destino"); return; }
+  if(n<1||n>it.qtde){ toast(`Quantidade deve ser entre 1 e ${it.qtde}`); return; }
+  if(destino===it.localizacao_id){ toast("O destino é igual à origem"); return; }
+  try{
+    const alvo=ITENS.find(i=>i.material_id===it.material_id && i.localizacao_id===destino);
+    if(alvo) await api(`/itens?id=eq.${alvo.id}`,{method:"PATCH",body:JSON.stringify({qtde:alvo.qtde+n})});
+    else await api("/itens",{method:"POST",body:JSON.stringify({
+      material_id:it.material_id, localizacao_id:destino, qtde:n,
+      patrimonio:n===it.qtde?it.patrimonio:null,
+    })});
+    if(it.qtde-n>0) await api(`/itens?id=eq.${it.id}`,{method:"PATCH",body:JSON.stringify({qtde:it.qtde-n})});
+    else await api(`/itens?id=eq.${it.id}`,{method:"PATCH",body:JSON.stringify({deleted_at:new Date().toISOString()})});
+    await api("/movimentacoes",{method:"POST",body:JSON.stringify({
+      material_id:it.material_id, origem_localizacao_id:it.localizacao_id,
+      destino_localizacao_id:destino, qtde:n,
+    })});
+    fecharMover(); await loadAll();
+    toast(`${n}× ${it.material} movido(s)`);
   }catch(e2){ fail(e2); }
 });
 
@@ -502,6 +577,37 @@ function renderCadastros(){
   const cur=Number(sel.value)||UNIDADES[0]?.id;
   preencherSelectUnidades(sel,cur);
   renderListaLocais();
+  renderListaMateriais();
+}
+function renderListaMateriais(){
+  const q=norm($("#buscaMat").value.trim());
+  const stats={};
+  ITENS.forEach(i=>{ const s=stats[i.material_id]||(stats[i.material_id]={total:0,locais:0}); s.total+=i.qtde; s.locais++; });
+  const ms=MATERIAIS.filter(m=>!q||norm(m.nome).includes(q));
+  $("#listaMateriais").innerHTML=ms.map(m=>{
+    const s=stats[m.id];
+    return `<li><span class="nm">${esc(m.nome)}</span><span class="cnt">${s?`${s.total}× em ${s.locais}`:"sem estoque"}</span>
+      <button class="btn small" onclick="renomearMaterial(${m.id})">Renomear</button>
+      <button class="btn small danger" onclick="excluirMaterial(${m.id})">Excluir</button></li>`;
+  }).join("")||`<li><span class="nm" style="color:var(--muted)">Nenhum material encontrado.</span></li>`;
+}
+$("#buscaMat").addEventListener("input",renderListaMateriais);
+async function renomearMaterial(id){
+  const m=MATERIAIS.find(x=>x.id===id); if(!m) return;
+  const alocs=ITENS.filter(i=>i.material_id===id).length;
+  const nome=prompt(`Novo nome para "${m.nome}"${alocs?` (muda nas ${alocs} alocações, todas as unidades)`:""}:`,m.nome);
+  if(!nome||nome.trim()===m.nome) return;
+  if(MATERIAIS.some(x=>x.id!==id&&norm(x.nome)===norm(nome))){ toast("Já existe um material com esse nome"); return; }
+  try{ await api(`/materiais?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({nome:nome.trim()})}); await loadAll(); toast("Material renomeado"); }
+  catch(e){ fail(e); }
+}
+async function excluirMaterial(id){
+  const m=MATERIAIS.find(x=>x.id===id); if(!m) return;
+  const alocs=ITENS.filter(i=>i.material_id===id);
+  if(alocs.length){ toast(`"${m.nome}" tem estoque em ${alocs.length} local(is) — exclua ou mova as alocações antes.`); return; }
+  if(!confirm(`Excluir "${m.nome}" do catálogo? (Exclusão lógica.)`)) return;
+  try{ await api(`/materiais?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({deleted_at:new Date().toISOString()})}); await loadAll(); toast("Material excluído"); }
+  catch(e){ fail(e); }
 }
 function renderListaLocais(){
   const uid=Number($("#cadUnidadeSel").value);
