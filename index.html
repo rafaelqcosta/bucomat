@@ -198,7 +198,9 @@ footer{margin-top:28px;color:var(--muted);font-size:12.5px}
   <form class="modal" id="itemForm">
     <h2 id="modalTitle">Novo item</h2>
     <label for="fMaterial">Material</label>
-    <input id="fMaterial" required>
+    <input id="fMaterial" list="dlMateriais" autocomplete="off" required>
+    <datalist id="dlMateriais"></datalist>
+    <div id="fResumo" style="margin-top:8px;font-size:12.5px;color:var(--muted)"></div>
     <div class="row">
       <div><label for="fQtde">Qtde</label><input id="fQtde" type="number" min="0" value="1" required></div>
       <div><label for="fPat">Patrimônio (opcional)</label><input id="fPat"></div>
@@ -234,12 +236,13 @@ async function api(path,opts={}){
 function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),2200); }
 function fail(e){ console.error(e); toast("Erro ao salvar: "+e.message); }
 
-let UNIDADES=[], LOCAIS=[], ITENS=[];
+let UNIDADES=[], LOCAIS=[], ITENS=[], MATERIAIS=[];
 async function loadAll(){
-  [UNIDADES,LOCAIS,ITENS]=await Promise.all([
+  [UNIDADES,LOCAIS,ITENS,MATERIAIS]=await Promise.all([
     api("/unidades?deleted_at=is.null&order=nome"),
     api("/localizacoes?deleted_at=is.null&order=nome"),
     api("/inventario?order=unidade,material"),
+    api("/materiais?deleted_at=is.null&order=nome"),
   ]);
   renderAll();
 }
@@ -418,14 +421,27 @@ function preencherSelectLocais(unidadeId,val){
     : `<option value="">— cadastre uma localização para esta unidade —</option>`;
 }
 $("#fUnidade").addEventListener("change",()=>preencherSelectLocais($("#fUnidade").value,null));
+function resumoMaterial(nome){
+  const m=MATERIAIS.find(x=>norm(x.nome)===norm(nome.trim()));
+  if(!m) return nome.trim()?`Material novo — será criado no catálogo.`:"";
+  const alocs=ITENS.filter(i=>i.material_id===m.id);
+  if(!alocs.length) return "Material do catálogo, sem estoque alocado.";
+  const total=alocs.reduce((a,d)=>a+d.qtde,0);
+  const dist=alocs.map(a=>`${a.qtde}× ${a.unidade} · ${a.localizacao}`).join("<br>");
+  return `<b>${total} no total</b>, em ${alocs.length} local(is):<br>${dist}`;
+}
+function atualizarResumo(){ $("#fResumo").innerHTML=resumoMaterial($("#fMaterial").value); }
+$("#fMaterial").addEventListener("input",atualizarResumo);
 function abrirModal(item){
   editandoId=item?item.id:null;
   $("#modalTitle").textContent=item?"Editar item":"Novo item";
+  $("#dlMateriais").innerHTML=MATERIAIS.map(m=>`<option value="${esc(m.nome)}">`).join("");
   $("#fMaterial").value=item?item.material:"";
   $("#fQtde").value=item?item.qtde:1;
   $("#fPat").value=item?.patrimonio||"";
   preencherSelectUnidades($("#fUnidade"),item?item.unidade_id:UNIDADES[0]?.id);
   preencherSelectLocais($("#fUnidade").value,item?item.localizacao_id:null);
+  atualizarResumo();
   $("#overlay").classList.add("open");
   $("#fMaterial").focus();
 }
@@ -434,18 +450,41 @@ $("#novoItem").onclick=()=>abrirModal(null);
 function editarItem(id){ const it=ITENS.find(i=>i.id===id); if(it) abrirModal(it); }
 $("#cancelar").onclick=fecharModal;
 $("#overlay").addEventListener("click",e=>{ if(e.target===$("#overlay")) fecharModal(); });
+async function resolverMaterialId(nome){
+  const existente=MATERIAIS.find(m=>norm(m.nome)===norm(nome));
+  if(existente) return existente.id;
+  const criado=await api("/materiais",{method:"POST",body:JSON.stringify({nome})});
+  return criado[0].id;
+}
 $("#itemForm").addEventListener("submit",async e=>{
   e.preventDefault();
+  const nome=$("#fMaterial").value.trim();
   const body={
-    material:$("#fMaterial").value.trim(),
     qtde:Number($("#fQtde").value),
     patrimonio:$("#fPat").value.trim()||null,
     localizacao_id:Number($("#fLocal").value),
   };
-  if(!body.material||!body.localizacao_id){ toast("Preencha material e localização"); return; }
+  if(!nome||!body.localizacao_id){ toast("Preencha material e localização"); return; }
   try{
-    if(editandoId) await api(`/itens?id=eq.${editandoId}`,{method:"PATCH",body:JSON.stringify(body)});
-    else await api("/itens",{method:"POST",body:JSON.stringify(body)});
+    if(editandoId){
+      const it=ITENS.find(i=>i.id===editandoId);
+      if(norm(nome)!==norm(it.material)){
+        // nome alterado: se já existe no catálogo, realoca; senão renomeia o material em TODAS as unidades
+        const existente=MATERIAIS.find(m=>norm(m.nome)===norm(nome));
+        if(existente) body.material_id=existente.id;
+        else{
+          const outros=ITENS.filter(i=>i.material_id===it.material_id && i.id!==it.id).length;
+          if(outros && !confirm(`Renomear "${it.material}" para "${nome}"?\nO nome muda nas ${outros+1} alocações deste material (todas as unidades).`)) return;
+          await api(`/materiais?id=eq.${it.material_id}`,{method:"PATCH",body:JSON.stringify({nome})});
+        }
+      }
+      await api(`/itens?id=eq.${editandoId}`,{method:"PATCH",body:JSON.stringify(body)});
+    }else{
+      body.material_id=await resolverMaterialId(nome);
+      const jaExiste=ITENS.find(i=>i.material_id===body.material_id && i.localizacao_id===body.localizacao_id);
+      if(jaExiste && !confirm(`"${nome}" já tem ${jaExiste.qtde} unidade(s) nessa localização.\nCriar outra alocação mesmo assim? (Para somar, use os botões − / + na tabela.)`)) return;
+      await api("/itens",{method:"POST",body:JSON.stringify(body)});
+    }
     fecharModal(); await loadAll(); toast(editandoId?"Item atualizado":"Item cadastrado");
   }catch(e2){ fail(e2); }
 });
