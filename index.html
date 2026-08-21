@@ -913,7 +913,6 @@ function abrirEditar(key){
   $("#edChips").innerHTML=g.idents.length
     ? g.idents.map(i=>`<span class="pchip" title="${esc(i.patrimonio||"")}${i.patrimonio&&i.numero_serie?" / ":""}${esc(i.numero_serie||"")}">${esc(i.patrimonio||i.numero_serie)}${i.patrimonio&&i.numero_serie?" / "+esc(i.numero_serie):""}<span class="x" title="Remover esta unidade" onclick="removerIdent(${i.id},this)">×</span></span>`).join("")
     : `<span class="hint">Nenhuma.</span>`;
-  $("#edNovoPat").value=""; $("#edNovaSerie").value="";
   $("#overlayEditar").classList.add("open");
 }
 function fecharEditar(){ $("#overlayEditar").classList.remove("open"); editandoKey=null; }
