@@ -89,6 +89,16 @@ td.q{width:1%;white-space:nowrap}
 .chkbtn.falta{color:var(--falta);background:var(--falta-bg)}
 .chkbtn.nao_conferido{color:var(--muted);background:var(--chip-bg)}
 td.acts{width:1%;white-space:nowrap;text-align:right}
+.iconbtn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;width:30px;height:30px;padding:0;cursor:pointer;font-size:14px;line-height:1;vertical-align:middle}
+.iconbtn:hover{border-color:var(--accent)}
+.iconbtn.danger{color:var(--falta)}
+.iconbtn:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+th.w-q{width:92px} th.w-pat{width:150px} th.w-ser{width:130px} th.w-loc{width:160px} th.w-un{width:130px} th.w-chk{width:84px} th.w-act{width:150px}
+.mcount{color:var(--ok);font-weight:700;font-variant-numeric:tabular-nums;text-align:right;min-width:40px;flex:none}
+.ltwrap{max-height:320px;overflow-y:auto;margin-top:10px;border:1px solid var(--line);border-radius:8px}
+.ltwrap table{border:0}
+.ltwrap td input{width:100%;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:6px 8px;font:13px "IBM Plex Mono",monospace}
+.ltwrap td.n{width:1%;color:var(--muted);font:400 12px "IBM Plex Mono",monospace;text-align:right}
 .empty{padding:40px;text-align:center;color:var(--muted)}
 .legend{display:flex;gap:14px;margin:10px 2px;font-size:13px;color:var(--muted);flex-wrap:wrap}
 footer{margin-top:28px;color:var(--muted);font-size:12.5px}
@@ -168,7 +178,7 @@ footer{margin-top:28px;color:var(--muted);font-size:12.5px}
     <span>Conferido: <b style="color:var(--ok)">✓</b> conferido · <b style="color:var(--falta)">✗</b> falta · <b>—</b> não conferido. O clique vale para todas as unidades do material naquela localização.</span>
   </div>
   <div class="tablewrap"><table>
-    <thead><tr><th>Qtde</th><th>Material</th><th>Patrimônio</th><th>Nº de Série</th><th>Localização</th><th>Unidade/Viatura</th><th style="text-align:center">Conferido</th><th></th></tr></thead>
+    <thead><tr><th class="w-q">Qtde</th><th>Material</th><th class="w-pat">Patrimônio</th><th class="w-ser">Nº de Série</th><th class="w-loc">Localização</th><th class="w-un">Unidade/Viatura</th><th class="w-chk" style="text-align:center">Conferido</th><th class="w-act"></th></tr></thead>
     <tbody id="tb"><tr><td colspan="8" class="empty">Carregando dados do banco…</td></tr></tbody>
   </table></div>
 </section>
@@ -217,13 +227,9 @@ footer{margin-top:28px;color:var(--muted);font-size:12.5px}
     <input id="fMaterial" list="dlMateriais" autocomplete="off" required>
     <datalist id="dlMateriais"></datalist>
     <div id="fResumo" class="hint" style="margin-top:8px"></div>
-    <div class="row">
-      <div><label for="fPat">Patrimônio (opcional)</label><input id="fPat"></div>
-      <div><label for="fSerie">Nº de Série (opcional)</label><input id="fSerie"></div>
-    </div>
     <label for="fQtde">Qtde</label>
     <input id="fQtde" type="number" min="1" value="1" required>
-    <div class="hint" id="fQtdeHint" hidden>Item com patrimônio/nº de série identifica 1 unidade física — qtde fixa em 1.</div>
+    <div class="hint">Patrimônios e nº de série são registrados depois, pelo botão 🏷 na linha do item.</div>
     <label for="fUnidade">Unidade/Viatura</label>
     <select id="fUnidade"></select>
     <label for="fLocal">Localização</label>
@@ -244,15 +250,7 @@ footer{margin-top:28px;color:var(--muted);font-size:12.5px}
     <input id="edBulk" type="number" min="0">
     <label>Unidades identificadas</label>
     <div class="chiprow" id="edChips"></div>
-    <div class="row">
-      <div><input id="edNovoPat" placeholder="Adicionar patrimônio…" aria-label="Novo patrimônio"></div>
-      <button type="button" class="btn" id="edAddPat">+ Patrimônio</button>
-    </div>
-    <div class="row" style="margin-top:8px">
-      <div><input id="edNovaSerie" placeholder="Adicionar nº de série…" aria-label="Novo nº de série"></div>
-      <button type="button" class="btn" id="edAddSerie">+ Nº Série</button>
-    </div>
-    <p class="hint" style="margin:10px 0 0">Cada patrimônio/nº de série adicionado vira 1 unidade física neste local. O × do chip remove aquela unidade. Para renomear o material use Cadastros; para mover, o botão Mover.</p>
+    <p class="hint" style="margin:10px 0 0">O × do chip remove aquela unidade física. Para registrar ou corrigir patrimônios/nº de série, use o botão 🏷 na linha do item; para renomear o material, Cadastros; para mover, ⇄.</p>
     <div class="actions">
       <button type="button" class="btn" id="edFechar">Fechar</button>
       <button type="submit" class="btn primary">Salvar qtde</button>
@@ -268,8 +266,10 @@ footer{margin-top:28px;color:var(--muted);font-size:12.5px}
     <div id="mvResumo" class="hint"></div>
     <label for="mvQtde">Unidades a granel a mover (<span id="mvBulkMax">0</span> disponíveis)</label>
     <input id="mvQtde" type="number" min="0" value="0">
-    <label>Unidades identificadas a mover (clique para selecionar)</label>
-    <div class="chiprow" id="mvChips"></div>
+    <div id="mvChipsWrap">
+      <label>Unidades identificadas a mover (clique para selecionar)</label>
+      <div class="chiprow" id="mvChips"></div>
+    </div>
     <label for="mvUnidade">Unidade/Viatura de destino</label>
     <select id="mvUnidade" required></select>
     <label for="mvLocal">Localização de destino</label>
@@ -277,6 +277,22 @@ footer{margin-top:28px;color:var(--muted);font-size:12.5px}
     <div class="actions">
       <button type="button" class="btn" id="mvCancelar">Cancelar</button>
       <button type="submit" class="btn primary">Mover</button>
+    </div>
+  </form>
+</div>
+<!-- Registrar patrimônios em lote -->
+<div class="overlay" id="overlayLote">
+  <form class="modal" id="loteForm" style="max-width:560px">
+    <h2>Registrar patrimônios</h2>
+    <div id="ltInfo" style="font-size:13.5px"></div>
+    <div class="ltwrap"><table>
+      <thead><tr><th style="text-align:right">#</th><th>Patrimônio</th><th>Nº de Série</th></tr></thead>
+      <tbody id="ltBody"></tbody>
+    </table></div>
+    <p class="hint" style="margin:10px 0 0">Uma linha por unidade física. Preencha patrimônio e/ou nº de série; linhas em branco continuam sem identificação (a granel). Limpar uma linha já registrada remove a identificação daquela unidade.</p>
+    <div class="actions">
+      <button type="button" class="btn" id="ltCancelar">Cancelar</button>
+      <button type="submit" class="btn primary">Salvar</button>
     </div>
   </form>
 </div>
@@ -443,7 +459,12 @@ function renderTable(){
     <td data-label="Localização">${esc(g.localizacao)}</td>
     <td data-label="Unidade/Viatura"><span class="badge">${esc(g.unidade)}</span></td>
     <td data-label="Conferido" style="text-align:center"><button type="button" class="chkbtn ${g.conferido}" title="${CONF_TITLE[g.conferido]} — clique para alternar (todo o grupo)" onclick="ciclarConferido('${g.key}')">${CONF_ICON[g.conferido]}</button></td>
-    <td class="acts"><button class="btn small" onclick="abrirMover('${g.key}')">Mover</button> <button class="btn small" onclick="abrirEditar('${g.key}')">Editar</button> <button class="btn small danger" onclick="excluirGrupo('${g.key}')">Excluir</button></td>
+    <td class="acts">
+      <button class="iconbtn" title="Registrar patrimônios / nº de série" onclick="abrirLote('${g.key}')">🏷</button>
+      <button class="iconbtn" title="Mover para outra unidade/localização" onclick="abrirMover('${g.key}')">⇄</button>
+      <button class="iconbtn" title="Editar quantidade" onclick="abrirEditar('${g.key}')">✎</button>
+      <button class="iconbtn danger" title="Excluir item" onclick="excluirGrupo('${g.key}')">🗑</button>
+    </td>
   </tr>`).join(""):`<tr><td colspan="8" class="empty">Nenhum material encontrado. Limpe os filtros para ver tudo.</td></tr>`;
 }
 
@@ -545,24 +566,12 @@ function resumoMaterial(nome){
   const total=gs.reduce((a,g)=>a+g.total,0);
   return `<b>${total} no total</b>, em ${gs.length} local(is):<br>`+gs.map(g=>`${g.total}× ${esc(g.unidade)} · ${esc(g.localizacao)}`).join("<br>");
 }
-// validação de unicidade global de patrimônio / nº de série (no cliente; o banco também garante)
-function patrimonioEmUso(v){ return ITENS.find(i=>i.patrimonio&&norm(i.patrimonio)===norm(v)); }
-function serieEmUso(v){ return ITENS.find(i=>i.numero_serie&&norm(i.numero_serie)===norm(v)); }
-
 // ---- Novo item (só pelo catálogo) ----
-function travarQtde(){
-  const identificado=!!($("#fPat").value.trim()||$("#fSerie").value.trim());
-  $("#fQtde").disabled=identificado;
-  if(identificado) $("#fQtde").value=1;
-  $("#fQtdeHint").hidden=!identificado;
-}
-$("#fPat").addEventListener("input",travarQtde);
-$("#fSerie").addEventListener("input",travarQtde);
 $("#fMaterial").addEventListener("input",()=>{ $("#fResumo").innerHTML=resumoMaterial($("#fMaterial").value); });
 $("#novoItem").onclick=()=>{
   $("#dlMateriais").innerHTML=MATERIAIS.map(m=>`<option value="${esc(m.nome)}">`).join("");
-  $("#fMaterial").value=""; $("#fPat").value=""; $("#fSerie").value=""; $("#fQtde").value=1;
-  $("#fResumo").innerHTML=""; travarQtde();
+  $("#fMaterial").value=""; $("#fQtde").value=1;
+  $("#fResumo").innerHTML="";
   preencherSelectUnidades($("#fUnidade"),UNIDADES[0]?.id);
   preencherSelectLocaisEm($("#fLocal"),$("#fUnidade").value,null);
   $("#overlay").classList.add("open");
@@ -581,20 +590,16 @@ async function resolverMaterialId(nome){
 $("#itemForm").addEventListener("submit",async e=>{
   e.preventDefault();
   const nome=$("#fMaterial").value.trim();
-  const pat=$("#fPat").value.trim()||null;
-  const serie=$("#fSerie").value.trim()||null;
   const localizacao_id=Number($("#fLocal").value);
+  const qtde=Number($("#fQtde").value);
   if(!nome||!localizacao_id){ toast("Preencha material e localização"); return; }
-  if(pat){ const em=patrimonioEmUso(pat); if(em){ toast(`Patrimônio ${pat} já cadastrado: ${em.material} em ${em.unidade}`); return; } }
-  if(serie){ const em=serieEmUso(serie); if(em){ toast(`Nº de série ${serie} já cadastrado: ${em.material} em ${em.unidade}`); return; } }
+  if(qtde<1||!Number.isInteger(qtde)){ toast("Quantidade inválida"); return; }
   try{
     const material_id=await resolverMaterialId(nome);
-    await api("/itens",{method:"POST",body:JSON.stringify({
-      material_id, localizacao_id,
-      qtde:(pat||serie)?1:Number($("#fQtde").value),
-      patrimonio:pat, numero_serie:serie,
-    })});
-    fecharModal(); await loadAll(); toast("Item cadastrado");
+    const alvo=ITENS.find(i=>i.material_id===material_id && i.localizacao_id===localizacao_id && !i.patrimonio && !i.numero_serie);
+    if(alvo) await api(`/itens?id=eq.${alvo.id}`,{method:"PATCH",body:JSON.stringify({qtde:alvo.qtde+qtde})});
+    else await api("/itens",{method:"POST",body:JSON.stringify({material_id,localizacao_id,qtde})});
+    fecharModal(); await loadAll(); toast("Item cadastrado — use 🏷 na linha para registrar patrimônios");
   }catch(e2){ fail(e2); }
 });
 
@@ -643,24 +648,78 @@ async function removerIdent(id){
     toast("Unidade removida");
   }catch(e){ fail(e); }
 }
-async function adicionarIdent(campo){
-  const g=grupo(editandoKey); if(!g) return;
-  const inp=campo==="patrimonio"?$("#edNovoPat"):$("#edNovaSerie");
-  const v=inp.value.trim(); if(!v) return;
-  const em=campo==="patrimonio"?patrimonioEmUso(v):serieEmUso(v);
-  if(em){ toast(`${campo==="patrimonio"?"Patrimônio":"Nº de série"} ${v} já cadastrado: ${em.material} em ${em.unidade}`); return; }
-  try{
-    await api("/itens",{method:"POST",body:JSON.stringify({
-      material_id:g.material_id, localizacao_id:g.localizacao_id, qtde:1, [campo]:v,
-    })});
-    inp.value="";
-    const key=editandoKey;
-    await loadAll(); abrirEditar(key);
-    toast("Unidade identificada adicionada (+1 física)");
-  }catch(e){ fail(e); }
+// ---- Registrar patrimônios em lote ----
+let loteKey=null;
+function abrirLote(key){
+  const g=grupo(key); if(!g) return;
+  loteKey=key;
+  $("#ltInfo").innerHTML=`<b>${esc(g.material)}</b><br>${esc(g.unidade)} · ${esc(g.localizacao)} — ${g.total} unidade(s) física(s): ${g.idents.length} identificada(s), ${g.bulkQtde} a granel`;
+  let n=0;
+  const linhas=[
+    ...g.idents.map(i=>`<tr data-id="${i.id}"><td class="n">${++n}</td>
+      <td><input value="${esc(i.patrimonio||"")}" placeholder="—" aria-label="Patrimônio ${n}"></td>
+      <td><input value="${esc(i.numero_serie||"")}" placeholder="—" aria-label="Nº de série ${n}"></td></tr>`),
+    ...Array.from({length:g.bulkQtde},()=>`<tr data-new><td class="n">${++n}</td>
+      <td><input placeholder="—" aria-label="Patrimônio ${n}"></td>
+      <td><input placeholder="—" aria-label="Nº de série ${n}"></td></tr>`),
+  ];
+  $("#ltBody").innerHTML=linhas.join("");
+  $("#overlayLote").classList.add("open");
 }
-$("#edAddPat").onclick=()=>adicionarIdent("patrimonio");
-$("#edAddSerie").onclick=()=>adicionarIdent("numero_serie");
+function fecharLote(){ $("#overlayLote").classList.remove("open"); loteKey=null; }
+$("#ltCancelar").onclick=fecharLote;
+$("#overlayLote").addEventListener("click",e=>{ if(e.target===$("#overlayLote")) fecharLote(); });
+$("#loteForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const g=grupo(loteKey); if(!g) return;
+  const editadas=[], removidas=[], novas=[];
+  const vistos={patrimonio:new Map(), numero_serie:new Map()};
+  const idsDoGrupo=new Set(g.ids);
+  // valida duplicidade dentro do formulário e contra o banco
+  for(const tr of $("#ltBody").querySelectorAll("tr")){
+    const [pat,serie]=[...tr.querySelectorAll("input")].map(i=>i.value.trim()||null);
+    const id=tr.dataset.id?Number(tr.dataset.id):null;
+    for(const [campo,v] of [["patrimonio",pat],["numero_serie",serie]]){
+      if(!v) continue;
+      const rot=campo==="patrimonio"?"Patrimônio":"Nº de série";
+      if(vistos[campo].has(norm(v))){ toast(`${rot} ${v} repetido no formulário`); return; }
+      vistos[campo].set(norm(v),true);
+      const em=ITENS.find(i=>i[campo]&&norm(i[campo])===norm(v)&&i.id!==id);
+      if(em){ toast(`${rot} ${v} já cadastrado: ${em.material} em ${em.unidade}`); return; }
+    }
+    if(id){
+      const orig=ITENS.find(i=>i.id===id);
+      if(!pat&&!serie) removidas.push(orig);
+      else if(pat!==(orig.patrimonio||null)||serie!==(orig.numero_serie||null)) editadas.push({id,pat,serie});
+    }else if(pat||serie){
+      novas.push({pat,serie});
+    }
+  }
+  if(!editadas.length&&!removidas.length&&!novas.length){ fecharLote(); return; }
+  try{
+    for(const ed of editadas)
+      await api(`/itens?id=eq.${ed.id}`,{method:"PATCH",body:JSON.stringify({patrimonio:ed.pat,numero_serie:ed.serie})});
+    for(const r of removidas)
+      await api(`/itens?id=eq.${r.id}`,{method:"PATCH",body:JSON.stringify({deleted_at:agora()})});
+    for(const nv of novas)
+      await api("/itens",{method:"POST",body:JSON.stringify({material_id:g.material_id,localizacao_id:g.localizacao_id,qtde:1,patrimonio:nv.pat,numero_serie:nv.serie})});
+    // mantém o total: identificar consome do granel; desidentificar devolve ao granel
+    const delta=removidas.length-novas.length;
+    if(delta>0){
+      if(g.bulks.length) await api(`/itens?id=eq.${g.bulks[0].id}`,{method:"PATCH",body:JSON.stringify({qtde:g.bulks[0].qtde+delta})});
+      else await api("/itens",{method:"POST",body:JSON.stringify({material_id:g.material_id,localizacao_id:g.localizacao_id,qtde:delta})});
+    }else if(delta<0){
+      let tirar=-delta;
+      for(const b of g.bulks){
+        if(tirar<=0) break;
+        const t=Math.min(b.qtde,tirar); tirar-=t;
+        if(b.qtde-t>0) await api(`/itens?id=eq.${b.id}`,{method:"PATCH",body:JSON.stringify({qtde:b.qtde-t})});
+        else await api(`/itens?id=eq.${b.id}`,{method:"PATCH",body:JSON.stringify({deleted_at:agora()})});
+      }
+    }
+    fecharLote(); await loadAll(); toast("Patrimônios registrados");
+  }catch(e2){ fail(e2); }
+});
 
 // ---- Mover grupo ----
 let movendoKey=null, mvSelecionados=new Set();
@@ -672,9 +731,8 @@ function abrirMover(key){
   $("#mvBulkMax").textContent=g.bulkQtde;
   $("#mvQtde").value=g.idents.length?0:g.bulkQtde;
   $("#mvQtde").max=g.bulkQtde;
-  $("#mvChips").innerHTML=g.idents.length
-    ? g.idents.map(i=>`<span class="pchip" style="cursor:pointer" data-id="${i.id}" onclick="alternarSel(this)">${esc(i.patrimonio||i.numero_serie)}</span>`).join("")
-    : `<span class="hint">Nenhuma unidade identificada neste local.</span>`;
+  $("#mvChipsWrap").hidden=!g.idents.length;
+  $("#mvChips").innerHTML=g.idents.map(i=>`<span class="pchip" style="cursor:pointer" data-id="${i.id}" onclick="alternarSel(this)">${esc(i.patrimonio||i.numero_serie)}</span>`).join("");
   preencherSelectUnidades($("#mvUnidade"),g.unidade_id);
   preencherSelectLocaisEm($("#mvLocal"),g.unidade_id,null);
   $("#overlayMover").classList.add("open");
@@ -729,7 +787,7 @@ function renderCadastros(){
   const fisPorUnidade={}, fisPorLocal={};
   ITENS.forEach(i=>{ fisPorUnidade[i.unidade_id]=(fisPorUnidade[i.unidade_id]||0)+i.qtde; fisPorLocal[i.localizacao_id]=(fisPorLocal[i.localizacao_id]||0)+i.qtde; });
   $("#listaUnidades").innerHTML=UNIDADES.map(u=>`<li>
-    <span class="nm">${esc(u.nome)}</span><span class="cnt">${fisPorUnidade[u.id]||0} fís.</span>
+    <span class="nm">${esc(u.nome)}</span><span class="cnt" title="Unidades físicas nesta viatura">${fisPorUnidade[u.id]||0} unid. físicas</span>
     <button class="btn small" onclick="renomearUnidade(${u.id})">Renomear</button>
     <button class="btn small danger" onclick="excluirUnidade(${u.id})">Excluir</button>
   </li>`).join("");
@@ -744,7 +802,7 @@ function renderListaLocais(){
   const fisPorLocal={};
   ITENS.forEach(i=>{ fisPorLocal[i.localizacao_id]=(fisPorLocal[i.localizacao_id]||0)+i.qtde; });
   $("#listaLocais").innerHTML=LOCAIS.filter(l=>l.unidade_id===uid).map(l=>`<li>
-    <span class="nm">${esc(l.nome)}</span><span class="cnt">${fisPorLocal[l.id]||0} fís.</span>
+    <span class="nm">${esc(l.nome)}</span><span class="cnt" title="Unidades físicas nesta localização">${fisPorLocal[l.id]||0} unid. físicas</span>
     <button class="btn small" onclick="renomearLocal(${l.id})">Renomear</button>
     <button class="btn small danger" onclick="excluirLocal(${l.id})">Excluir</button>
   </li>`).join("")||`<li><span class="nm" style="color:var(--muted)">Nenhuma localização nesta unidade.</span></li>`;
@@ -757,7 +815,7 @@ function renderListaMateriais(){
   const ms=MATERIAIS.filter(m=>!q||norm(m.nome).includes(q));
   $("#listaMateriais").innerHTML=ms.map(m=>{
     const s=stats[m.id];
-    return `<li><span class="nm">${esc(m.nome)}</span><span class="cnt">${s?`${s.total}× em ${s.locais}`:"sem estoque"}</span>
+    return `<li><span class="mcount" title="Total de unidades físicas">${s?s.total:0}</span><span class="nm">${esc(m.nome)}</span>
       <button class="btn small" onclick="renomearMaterial(${m.id})">Renomear</button>
       <button class="btn small danger" onclick="excluirMaterial(${m.id})">Excluir</button></li>`;
   }).join("")||`<li><span class="nm" style="color:var(--muted)">Nenhum material encontrado.</span></li>`;
