@@ -180,7 +180,9 @@ body.busy button:not(.loading){pointer-events:none;opacity:.55}
 </div>
 
 <section id="pane-inv" role="tabpanel">
-  <div class="filters" id="filters"></div>
+  <div class="filters" id="filters">
+    <button type="button" class="btn" id="maisFiltros" style="align-self:stretch">+ Filtros</button>
+  </div>
   <div class="count">
     <span id="count">Carregando…</span>
     <button class="btn small" id="reset" hidden>Limpar filtros</button>
@@ -301,6 +303,36 @@ body.busy button:not(.loading){pointer-events:none;opacity:.55}
     </div>
   </form>
 </div>
+<!-- Mais filtros -->
+<div class="overlay" id="overlayFiltros">
+  <form class="modal" id="filtrosForm">
+    <h2>Mais filtros</h2>
+    <label for="xfRegistro">Identificação</label>
+    <select id="xfRegistro">
+      <option value="">Todos os itens</option>
+      <option value="patrimonio">Com patrimônio</option>
+      <option value="serie">Com nº de série</option>
+      <option value="sem">Sem identificação</option>
+    </select>
+    <label for="xfConferido">Conferido</label>
+    <select id="xfConferido">
+      <option value="">Todos</option>
+      <option value="conferido">✓ Conferido</option>
+      <option value="falta">✗ Falta</option>
+      <option value="nao_conferido">— Não conferido</option>
+    </select>
+    <div class="row">
+      <div><label for="xfQtdeMin">Qtde mínima</label><input id="xfQtdeMin" type="number" min="0" placeholder="—"></div>
+      <div><label for="xfQtdeMax">Qtde máxima</label><input id="xfQtdeMax" type="number" min="0" placeholder="—"></div>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn" id="xfLimpar">Limpar</button>
+      <button type="button" class="btn" id="xfCancelar">Cancelar</button>
+      <button type="submit" class="btn primary">Aplicar</button>
+    </div>
+  </form>
+</div>
+
 <!-- Registrar patrimônios em lote -->
 <div class="overlay" id="overlayLote">
   <form class="modal" id="loteForm" style="max-width:560px">
@@ -419,8 +451,19 @@ function valuesOf(g,key){
   }
   return [g[key]];
 }
+const extra={registro:"",conferido:"",qtdeMin:null,qtdeMax:null};
+function passaExtras(g){
+  if(extra.registro==="patrimonio"&&!g.idents.some(i=>i.patrimonio)) return false;
+  if(extra.registro==="serie"&&!g.idents.some(i=>i.numero_serie)) return false;
+  if(extra.registro==="sem"&&g.idents.length) return false;
+  if(extra.conferido&&g.conferido!==extra.conferido) return false;
+  if(extra.qtdeMin!=null&&g.total<extra.qtdeMin) return false;
+  if(extra.qtdeMax!=null&&g.total>extra.qtdeMax) return false;
+  return true;
+}
+function extrasAtivos(){ return (extra.registro?1:0)+(extra.conferido?1:0)+(extra.qtdeMin!=null?1:0)+(extra.qtdeMax!=null?1:0); }
 function grupoPassa(g,exceto){
-  return FILTERS.every(f=>f.key===exceto||!state[f.key]||valuesOf(g,f.key).includes(state[f.key]));
+  return passaExtras(g) && FILTERS.every(f=>f.key===exceto||!state[f.key]||valuesOf(g,f.key).includes(state[f.key]));
 }
 function optionsFor(key){
   const m=new Map();
@@ -475,18 +518,63 @@ function buildCombo(f){
 function closeAll(){ document.querySelectorAll(".combo.open").forEach(c=>c._close()); }
 document.addEventListener("click",e=>{ if(!e.target.closest(".combo")) closeAll(); });
 FILTERS.forEach(f=>{ const c=buildCombo(f); combos[f.key]=c; $("#filters").append(c); });
-$("#reset").onclick=()=>FILTERS.forEach(f=>combos[f.key]._set(null));
+$("#reset").onclick=()=>{
+  extra.registro=""; extra.conferido=""; extra.qtdeMin=null; extra.qtdeMax=null;
+  atualizarBotaoFiltros();
+  FILTERS.forEach(f=>combos[f.key]._set(null));
+};
+
+// ---- Modal de mais filtros ----
+const XF_ROTULO={registro:{patrimonio:"Com patrimônio",serie:"Com nº de série",sem:"Sem identificação"},
+                 conferido:{conferido:"Conferido",falta:"Falta",nao_conferido:"Não conferido"}};
+$("#filters").append($("#maisFiltros")); // botão fica depois dos combos
+function atualizarBotaoFiltros(){
+  const n=extrasAtivos();
+  const b=$("#maisFiltros");
+  b.textContent=n?`+ Filtros (${n})`:"+ Filtros";
+  b.style.borderColor=n?"var(--accent)":"";
+}
+$("#maisFiltros").onclick=()=>{
+  $("#xfRegistro").value=extra.registro;
+  $("#xfConferido").value=extra.conferido;
+  $("#xfQtdeMin").value=extra.qtdeMin??"";
+  $("#xfQtdeMax").value=extra.qtdeMax??"";
+  $("#overlayFiltros").classList.add("open");
+};
+function fecharFiltros(){ $("#overlayFiltros").classList.remove("open"); }
+$("#xfCancelar").onclick=fecharFiltros;
+$("#overlayFiltros").addEventListener("click",e=>{ if(e.target===$("#overlayFiltros")) fecharFiltros(); });
+$("#filtrosForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  extra.registro=$("#xfRegistro").value;
+  extra.conferido=$("#xfConferido").value;
+  extra.qtdeMin=$("#xfQtdeMin").value===""?null:Number($("#xfQtdeMin").value);
+  extra.qtdeMax=$("#xfQtdeMax").value===""?null:Number($("#xfQtdeMax").value);
+  if(extra.qtdeMin!=null&&extra.qtdeMax!=null&&extra.qtdeMin>extra.qtdeMax){ toast("Qtde mínima maior que a máxima"); return; }
+  atualizarBotaoFiltros(); fecharFiltros(); renderTable();
+});
+$("#xfLimpar").onclick=()=>{
+  extra.registro=""; extra.conferido=""; extra.qtdeMin=null; extra.qtdeMax=null;
+  atualizarBotaoFiltros(); fecharFiltros(); renderTable();
+};
 
 // ---- Tabela do inventário (uma linha por grupo material×localização) ----
 const CONF_NEXT={conferido:"falta", falta:"nao_conferido", nao_conferido:"conferido"};
 const CONF_ICON={conferido:"✓", falta:"✗", nao_conferido:"—"};
 const CONF_TITLE={conferido:"Conferido", falta:"Falta", nao_conferido:"Não conferido"};
 function filteredGroups(){ return GRUPOS.filter(g=>grupoPassa(g,null)); }
-function filtrosAtivos(){ return FILTERS.filter(f=>state[f.key]).map(f=>`${f.tag}: ${state[f.key]}`).join(" · "); }
+function filtrosAtivos(){
+  const partes=FILTERS.filter(f=>state[f.key]).map(f=>`${f.tag}: ${state[f.key]}`);
+  if(extra.registro) partes.push("Identificação: "+XF_ROTULO.registro[extra.registro]);
+  if(extra.conferido) partes.push("Conferido: "+XF_ROTULO.conferido[extra.conferido]);
+  if(extra.qtdeMin!=null) partes.push("Qtde ≥ "+extra.qtdeMin);
+  if(extra.qtdeMax!=null) partes.push("Qtde ≤ "+extra.qtdeMax);
+  return partes.join(" · ");
+}
 const chips=vs=>vs.length?vs.map(v=>`<span class="pchip" title="${esc(v)}">${esc(v)}</span>`).join(""):"—";
 function renderTable(){
   const gs=filteredGroups();
-  $("#reset").hidden=!FILTERS.some(f=>state[f.key]);
+  $("#reset").hidden=!FILTERS.some(f=>state[f.key])&&!extrasAtivos();
   $("#count").textContent=gs.length+" de "+GRUPOS.length+" itens · "+gs.reduce((a,g)=>a+g.total,0)+" unid. físicas";
   $("#tb").innerHTML=gs.length?gs.map(g=>`<tr>
     <td class="q" data-label="Qtde"><span class="qbox">
