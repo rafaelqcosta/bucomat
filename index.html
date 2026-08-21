@@ -120,6 +120,9 @@ footer{margin-top:28px;color:var(--muted);font-size:12.5px}
 .modal .row>*{flex:1}
 .modal .actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
 .modal .hint{font-size:12.5px;color:var(--muted)}
+.mvsec{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-top:12px}
+.mvsec>label{margin-top:0}
+.mvsec[hidden]{display:none}
 /* cadastros */
 .cadgrid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:stretch}
 .cadcard{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;display:flex;flex-direction:column}
@@ -270,11 +273,17 @@ footer{margin-top:28px;color:var(--muted);font-size:12.5px}
     <h2>Mover material</h2>
     <div id="mvInfo" style="font-size:13.5px;margin-bottom:4px"></div>
     <div id="mvResumo" class="hint"></div>
-    <label for="mvQtde">Unidades a granel a mover (<span id="mvBulkMax">0</span> disponíveis)</label>
-    <input id="mvQtde" type="number" min="0" value="0">
-    <div id="mvChipsWrap">
-      <label>Unidades identificadas a mover (clique para selecionar)</label>
-      <div class="chiprow" id="mvChips"></div>
+    <div class="mvsec" id="mvSecBulk">
+      <label for="mvQtde">Sem patrimônio/nº de série — a granel (<span id="mvBulkMax">0</span> disponíveis)</label>
+      <input id="mvQtde" type="number" min="0" value="0">
+    </div>
+    <div class="mvsec" id="mvSecPat">
+      <label>Com patrimônio (clique para selecionar)</label>
+      <div class="chiprow" id="mvChipsPat"></div>
+    </div>
+    <div class="mvsec" id="mvSecSerie">
+      <label>Com nº de série (clique para selecionar)</label>
+      <div class="chiprow" id="mvChipsSerie"></div>
     </div>
     <label for="mvUnidade">Unidade/Viatura de destino</label>
     <select id="mvUnidade" required></select>
@@ -765,11 +774,18 @@ function abrirMover(key){
   movendoKey=key; mvSelecionados=new Set();
   $("#mvInfo").innerHTML=`<b>${esc(g.material)}</b><br>Origem: ${esc(g.unidade)} · ${esc(g.localizacao)} — total ${g.total}`;
   $("#mvResumo").innerHTML=resumoMaterial(g.material);
+  $("#mvSecBulk").hidden=!g.bulkQtde;
   $("#mvBulkMax").textContent=g.bulkQtde;
   $("#mvQtde").value=g.idents.length?0:g.bulkQtde;
   $("#mvQtde").max=g.bulkQtde;
-  $("#mvChipsWrap").hidden=!g.idents.length;
-  $("#mvChips").innerHTML=g.idents.map(i=>`<span class="pchip" style="cursor:pointer" data-id="${i.id}" title="${esc(i.patrimonio||i.numero_serie)}" onclick="alternarSel(this)">${esc(i.patrimonio||i.numero_serie)}</span>`).join("");
+  const chipSel=i=>{ const rot=i.patrimonio||i.numero_serie;
+    return `<span class="pchip" style="cursor:pointer" data-id="${i.id}" title="${esc(rot)}" onclick="alternarSel(this)">${esc(rot)}</span>`; };
+  const comPat=g.idents.filter(i=>i.patrimonio);
+  const soSerie=g.idents.filter(i=>!i.patrimonio&&i.numero_serie);
+  $("#mvSecPat").hidden=!comPat.length;
+  $("#mvChipsPat").innerHTML=comPat.map(chipSel).join("");
+  $("#mvSecSerie").hidden=!soSerie.length;
+  $("#mvChipsSerie").innerHTML=soSerie.map(chipSel).join("");
   preencherSelectUnidades($("#mvUnidade"),g.unidade_id);
   preencherSelectLocaisEm($("#mvLocal"),g.unidade_id,null);
   $("#overlayMover").classList.add("open");
