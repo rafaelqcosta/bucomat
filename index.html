@@ -1200,11 +1200,203 @@ async function excluirMaterial(id,el){
   catch(e){ fail(e); } });
 }
 
+// ---- Auditoria ----
+let AUD=[], audMapas=null, audFim=false;
+const AUD_LOTE=1000;
+const AUD_TABELA={unidades:"Unidade",localizacoes:"Localização",materiais:"Material",itens:"Item",movimentacoes:"Movimentação"};
+const AUD_ACAO={INSERT:"Criação",UPDATE:"Alteração",DELETE_LOGICO:"Exclusão",DELETE:"Exclusão"};
+const AUD_CAMPO={qtde:"Qtde",patrimonio:"Patrimônio",numero_serie:"Nº de série",conferido:"Conferido",nome:"Nome",
+  material_id:"Material",localizacao_id:"Localização",unidade_id:"Unidade",deleted_at:"Excluído em"};
+const audState={usuario:null,acao:null,tabela:null,registro:null};
+
+async function audCarregarMapas(){
+  // inclui registros excluídos, para resolver nomes de referências antigas
+  const [ms,ls,us]=await Promise.all([
+    api("/materiais?select=id,nome"),
+    api("/localizacoes?select=id,nome,unidade_id"),
+    api("/unidades?select=id,nome"),
+  ]);
+  const mu=new Map(us.map(u=>[u.id,u.nome]));
+  audMapas={
+    material:new Map(ms.map(m=>[m.id,m.nome])),
+    local:new Map(ls.map(l=>[l.id,(mu.get(l.unidade_id)||"?")+" · "+l.nome])),
+    unidade:mu,
+  };
+}
+function audValorLegivel(campo,v){
+  if(v==null||v==="") return "—";
+  if(campo==="material_id") return audMapas.material.get(v)||("#"+v);
+  if(campo==="localizacao_id"||campo==="origem_localizacao_id"||campo==="destino_localizacao_id") return audMapas.local.get(v)||("#"+v);
+  if(campo==="unidade_id") return audMapas.unidade.get(v)||("#"+v);
+  if(campo==="conferido") return CONF_TITLE[v]||v;
+  return String(v);
+}
+function audRegistro(r){
+  const d=r.dados?.depois||r.dados||{};
+  if(r.tabela==="itens") return `${audMapas.material.get(d.material_id)||"?"} — ${audMapas.local.get(d.localizacao_id)||"?"}`;
+  if(r.tabela==="movimentacoes") return `${d.qtde}× ${audMapas.material.get(d.material_id)||"?"}`;
+  if(r.tabela==="localizacoes") return `${audMapas.unidade.get(d.unidade_id)||"?"} · ${d.nome||"?"}`;
+  return d.nome||("#"+r.registro_id);
+}
+function audDetalhes(r){
+  const IGNORAR=new Set(["updated_at","updated_by","created_at","created_by","id"]);
+  if(r.acao==="INSERT"){
+    const d=r.dados||{};
+    if(r.tabela==="itens") return `Criado: ${d.qtde}×${d.patrimonio?` · patrimônio <b>${esc(d.patrimonio)}</b>`:""}${d.numero_serie?` · série <b>${esc(d.numero_serie)}</b>`:""}`;
+    if(r.tabela==="movimentacoes") return `${audValorLegivel("origem_localizacao_id",d.origem_localizacao_id)} → <b>${audValorLegivel("destino_localizacao_id",d.destino_localizacao_id)}</b>${d.patrimonios?` · ${esc(d.patrimonios.join(", "))}`:""}`;
+    return "Criado";
+  }
+  const a=r.dados?.antes||{}, dp=r.dados?.depois||{};
+  const difs=[];
+  for(const k of Object.keys(dp)){
+    if(IGNORAR.has(k)) continue;
+    if(JSON.stringify(a[k])!==JSON.stringify(dp[k]))
+      difs.push(`${AUD_CAMPO[k]||k}: ${esc(audValorLegivel(k,a[k]))} → <b>${esc(audValorLegivel(k,dp[k]))}</b>`);
+  }
+  if(r.acao==="DELETE_LOGICO") return "Removido (exclusão lógica)"+(difs.length>1?"":"");
+  return difs.join(" · ")||"—";
+}
+function audEnriquecer(r){
+  const dt=new Date(r.created_at);
+  r._quando=dt.toLocaleDateString("pt-BR")+" "+dt.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+  r._dia=r.created_at.slice(0,10);
+  r._registro=audRegistro(r);
+  r._detalhes=audDetalhes(r);
+}
+async function audCarregar(reset){
+  if(reset){ AUD=[]; audFim=false; }
+  if(!audMapas) await audCarregarMapas();
+  const lote=await api(`/auditoria?order=id.desc&limit=${AUD_LOTE}&offset=${AUD.length}`);
+  lote.forEach(audEnriquecer);
+  AUD.push(...lote);
+  if(lote.length<AUD_LOTE) audFim=true;
+  renderAud();
+}
+const AUD_FILTERS=[
+  {key:"usuario", tag:"Usuário", all:"Todos os usuários", de:r=>r.usuario||"—"},
+  {key:"acao",    tag:"Ação",    all:"Todas as ações",    de:r=>AUD_ACAO[r.acao]||r.acao},
+  {key:"tabela",  tag:"Tabela",  all:"Todas as tabelas",  de:r=>AUD_TABELA[r.tabela]||r.tabela},
+  {key:"registro",tag:"Registro",all:"Todos os registros",de:r=>r._registro},
+];
+function audPassa(r,exceto){
+  if($("#audDe").value && r._dia<$("#audDe").value) return false;
+  if($("#audAte").value && r._dia>$("#audAte").value) return false;
+  return AUD_FILTERS.every(f=>f.key===exceto||!audState[f.key]||f.de(r)===audState[f.key]);
+}
+function audFiltrados(){ return AUD.filter(r=>audPassa(r,null)); }
+function audOptions(key){
+  const f=AUD_FILTERS.find(x=>x.key===key);
+  const m=new Map();
+  AUD.filter(r=>audPassa(r,key)).forEach(r=>{ const v=f.de(r); m.set(v,(m.get(v)||0)+1); });
+  return [...m.entries()].sort((a,b)=>String(a[0]).localeCompare(String(b[0]),"pt"));
+}
+const audCombos={};
+function buildComboAud(f){
+  const root=document.createElement("div");
+  root.className="combo";
+  root.innerHTML=`
+    <span class="combo-tag">${f.tag}</span>
+    <button type="button" class="combo-btn" aria-haspopup="listbox" aria-expanded="false">
+      <span class="lbl placeholder">${f.all}</span>
+      <span class="clear" hidden title="Limpar">×</span>
+      <span class="caret">▼</span>
+    </button>
+    <div class="combo-panel">
+      <input type="text" placeholder="Buscar ${f.tag.toLowerCase()}…" aria-label="Buscar ${f.tag}">
+      <ul class="combo-list" role="listbox"></ul>
+    </div>`;
+  const btn=root.querySelector(".combo-btn"), lbl=root.querySelector(".lbl"),
+        clear=root.querySelector(".clear"), inp=root.querySelector("input"),
+        list=root.querySelector(".combo-list");
+  function renderList(){
+    const q=norm(inp.value.trim());
+    const opts=audOptions(f.key).filter(([v])=>!q||norm(String(v)).includes(q));
+    list.innerHTML=opts.length
+      ? opts.map(([v,n])=>`<li role="option" data-v="${esc(v)}" class="${audState[f.key]===v?"sel":""}">${esc(v)}<span class="n">${n}</span></li>`).join("")
+      : `<li class="none">Nada encontrado</li>`;
+  }
+  function open(){ closeAll(); root.classList.add("open"); btn.setAttribute("aria-expanded","true"); inp.value=""; renderList(); inp.focus(); }
+  function close(){ root.classList.remove("open"); btn.setAttribute("aria-expanded","false"); }
+  function set(v){
+    audState[f.key]=v;
+    if(v){ lbl.textContent=v; lbl.classList.remove("placeholder"); clear.hidden=false; root.dataset.active=""; }
+    else { lbl.textContent=f.all; lbl.classList.add("placeholder"); clear.hidden=true; delete root.dataset.active; }
+    close(); renderAud();
+  }
+  btn.addEventListener("click",e=>{ if(e.target===clear){ set(null); e.stopPropagation(); return; } root.classList.contains("open")?close():open(); });
+  inp.addEventListener("input",renderList);
+  inp.addEventListener("keydown",e=>{
+    if(e.key==="Escape") close();
+    if(e.key==="Enter"){ e.preventDefault(); const first=list.querySelector("li[data-v]"); if(first) set(first.dataset.v); }
+  });
+  list.addEventListener("click",e=>{ const li=e.target.closest("li[data-v]"); if(li) set(li.dataset.v===audState[f.key]?null:li.dataset.v); });
+  root._close=close; root._set=set;
+  return root;
+}
+AUD_FILTERS.forEach(f=>{ const c=buildComboAud(f); audCombos[f.key]=c; $("#filtersAud").append(c); });
+function renderAud(){
+  const rs=audFiltrados();
+  $("#resetAud").hidden=!AUD_FILTERS.some(f=>audState[f.key])&&!$("#audDe").value&&!$("#audAte").value;
+  $("#countAud").textContent=rs.length+" de "+AUD.length+" registros"+(audFim?"":" (parcial)");
+  $("#audMais").hidden=audFim;
+  $("#tbAud").innerHTML=rs.length?rs.map(r=>`<tr>
+    <td class="aud-dt" data-label="Data/Hora">${r._quando}</td>
+    <td data-label="Usuário">${esc(r.usuario||"—")}</td>
+    <td data-label="Ação"><span class="acao ${r.acao}">${AUD_ACAO[r.acao]||r.acao}</span></td>
+    <td data-label="Tabela">${AUD_TABELA[r.tabela]||r.tabela}</td>
+    <td class="m" data-label="Registro">${esc(r._registro)}</td>
+    <td class="aud-det" data-label="Detalhes">${r._detalhes}</td>
+  </tr>`).join(""):`<tr><td colspan="6" class="empty">Nenhum registro com esses filtros.</td></tr>`;
+}
+$("#resetAud").onclick=()=>{ $("#audDe").value=""; $("#audAte").value=""; AUD_FILTERS.forEach(f=>audCombos[f.key]._set(null)); };
+$("#audDe").addEventListener("change",renderAud);
+$("#audAte").addEventListener("change",renderAud);
+$("#audAtualizar").onclick=async function(){ await guard(this,()=>audCarregar(true)); };
+$("#audMais").onclick=async function(){ await guard(this,()=>audCarregar(false)); };
+$("#audCsv").onclick=()=>{
+  const rs=audFiltrados();
+  const cell=v=>{ v=String(v??"").replace(/<[^>]*>/g,""); return /[";\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+  const linhas=[["Data/Hora","Usuário","Ação","Tabela","Registro","Detalhes"]]
+    .concat(rs.map(r=>[r._quando,r.usuario||"",AUD_ACAO[r.acao]||r.acao,AUD_TABELA[r.tabela]||r.tabela,r._registro,r._detalhes]));
+  const csv="﻿"+linhas.map(l=>l.map(cell).join(";")).join("\r\n");
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
+  a.download=`auditoria_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click(); URL.revokeObjectURL(a.href);
+  toast(`CSV com ${rs.length} registros gerado`);
+};
+$("#audPdf").onclick=()=>{
+  const rs=audFiltrados();
+  const w=window.open("","_blank");
+  if(!w){ toast("Libere pop-ups para gerar o PDF"); return; }
+  w.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
+<title>Auditoria SISCOMAT — ${hoje()}</title>
+<style>
+  body{font:11px/1.5 -apple-system,"Segoe UI",Roboto,sans-serif;color:#1B2529;margin:28px}
+  h1{font-size:18px;margin:0}
+  .sub{color:#5C6B70;font-size:11px;margin:4px 0 16px;border-bottom:2px solid #B3352C;padding-bottom:10px}
+  table{width:100%;border-collapse:collapse}
+  th{font-size:9px;text-transform:uppercase;letter-spacing:.06em;text-align:left;color:#5C6B70;border-bottom:2px solid #ccc;padding:4px 6px}
+  td{border-bottom:1px solid #e2e2e2;padding:4px 6px;vertical-align:top}
+  @media print{ @page{margin:12mm} }
+</style></head><body>
+<h1>Auditoria SISCOMAT</h1>
+<div class="sub">Gerado em ${hoje()} · ${rs.length} registros</div>
+<table><thead><tr><th>Data/Hora</th><th>Usuário</th><th>Ação</th><th>Tabela</th><th>Registro</th><th>Detalhes</th></tr></thead><tbody>
+${rs.map(r=>`<tr><td>${r._quando}</td><td>${esc(r.usuario||"—")}</td><td>${AUD_ACAO[r.acao]||r.acao}</td><td>${AUD_TABELA[r.tabela]||r.tabela}</td><td>${esc(r._registro)}</td><td>${r._detalhes}</td></tr>`).join("")}
+</tbody></table>
+</body></html>`);
+  w.document.close();
+  w.onload=()=>{ w.focus(); w.print(); };
+};
+
 // ---- Abas ----
 document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
   document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected",String(x===t)));
   $("#pane-inv").hidden=t.id!=="tab-inv";
   $("#pane-cad").hidden=t.id!=="tab-cad";
+  $("#pane-aud").hidden=t.id!=="tab-aud";
+  if(t.id==="tab-aud"&&!AUD.length&&SESSAO) audCarregar(true).catch(fail);
 });
 
 // ---- Inicialização: exige login ----
