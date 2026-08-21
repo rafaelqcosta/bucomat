@@ -232,7 +232,7 @@ body.busy button:not(.loading){pointer-events:none;opacity:.55}
   </div>
   <div class="legend">
     <span>Conferido: <b style="color:var(--ok)">✓</b> conferido · <b style="color:var(--falta)">✗</b> falta · <b>—</b> não conferido. O clique vale para todas as unidades do material naquela localização.</span>
-    <span>Patrimônios e nº de série são registrados pelo botão 🏷 na linha do item.</span>
+    <span>Quantidade, patrimônios e nº de série são editados pelo botão 🏷 na linha do item.</span>
   </div>
   <div class="tablewrap"><table>
     <thead><tr><th class="w-q">Qtde</th><th>Material</th><th class="w-pat">Patrimônio</th><th class="w-ser">Nº de Série</th><th class="w-loc">Localização</th><th class="w-un">Unidade/Viatura</th><th class="w-chk" style="text-align:center">Conferido</th><th class="w-act"></th></tr></thead>
@@ -317,23 +317,6 @@ body.busy button:not(.loading){pointer-events:none;opacity:.55}
   </form>
 </div>
 
-<!-- Editar grupo (qtde a granel + unidades identificadas) -->
-<div class="overlay" id="overlayEditar">
-  <form class="modal" id="editarForm">
-    <h2>Editar item</h2>
-    <div id="edInfo" style="font-size:13.5px;margin-bottom:4px"></div>
-    <label for="edBulk">Unidades sem identificação (a granel)</label>
-    <input id="edBulk" type="number" min="0">
-    <label>Unidades identificadas</label>
-    <div class="chiprow" id="edChips"></div>
-    <p class="hint" style="margin:10px 0 0">O × do chip remove aquela unidade física. Para registrar ou corrigir patrimônios/nº de série, use o botão 🏷 na linha do item; para renomear o material, Cadastros; para mover, ⇄.</p>
-    <div class="actions">
-      <button type="button" class="btn" id="edFechar">Fechar</button>
-      <button type="submit" class="btn primary">Salvar qtde</button>
-    </div>
-  </form>
-</div>
-
 <!-- Mover grupo -->
 <div class="overlay" id="overlayMover">
   <form class="modal" id="moverForm">
@@ -394,17 +377,20 @@ body.busy button:not(.loading){pointer-events:none;opacity:.55}
   </form>
 </div>
 
-<!-- Registrar patrimônios em lote -->
+<!-- Editar item: qtde a granel + patrimônios/nº de série em lote -->
 <div class="overlay" id="overlayLote">
-  <form class="modal" id="loteForm" style="max-width:560px">
-    <h2>Registrar patrimônios</h2>
+  <form class="modal" id="loteForm" style="max-width:580px">
+    <h2>Editar item</h2>
     <div id="ltInfo" style="font-size:13.5px"></div>
+    <label for="ltBulk">Unidades sem identificação (a granel)</label>
+    <input id="ltBulk" type="number" min="0">
+    <label style="margin-bottom:0">Unidades identificadas — uma linha por unidade física</label>
     <div class="ltwrap"><table>
-      <thead><tr><th style="text-align:right">#</th><th>Patrimônio</th><th>Nº de Série</th></tr></thead>
+      <thead><tr><th style="text-align:right">#</th><th>Patrimônio</th><th>Nº de Série</th><th style="width:40px"></th></tr></thead>
       <tbody id="ltBody"></tbody>
     </table></div>
     <div id="ltErro" hidden></div>
-    <p class="hint" style="margin:10px 0 0">Uma linha por unidade física. Preencha patrimônio e/ou nº de série; linhas em branco continuam sem identificação (a granel). Limpar uma linha já registrada remove a identificação daquela unidade.</p>
+    <p class="hint" style="margin:10px 0 0">Preencher uma linha em branco identifica 1 unidade a granel (o total não muda). Limpar uma linha registrada remove só a identificação (a unidade volta ao granel). O 🗑 exclui a unidade física (o total diminui).</p>
     <div class="actions">
       <button type="button" class="btn" id="ltCancelar">Cancelar</button>
       <button type="submit" class="btn primary">Salvar</button>
@@ -752,9 +738,8 @@ function renderTable(){
     <td data-label="Unidade/Viatura"><span class="badge">${esc(g.unidade)}</span></td>
     <td data-label="Conferido" style="text-align:center"><button type="button" class="chkbtn ${g.conferido}" title="${CONF_TITLE[g.conferido]} — clique para alternar (todo o grupo)" onclick="ciclarConferido('${g.key}',this)">${CONF_ICON[g.conferido]}</button></td>
     <td class="acts">
-      <button class="iconbtn" title="Registrar patrimônios / nº de série" onclick="abrirLote('${g.key}')">🏷</button>
+      <button class="iconbtn" title="Editar item (qtde, patrimônios e nº de série)" onclick="abrirLote('${g.key}')">🏷</button>
       <button class="iconbtn" title="Mover para outra unidade/localização" onclick="abrirMover('${g.key}')">⇄</button>
-      <button class="iconbtn" title="Editar quantidade" onclick="abrirEditar('${g.key}')">✎</button>
       <button class="iconbtn danger" title="Excluir item" onclick="excluirGrupo('${g.key}',this)">🗑</button>
     </td>
   </tr>`).join(""):`<tr><td colspan="8" class="empty">Nenhum material encontrado. Limpe os filtros para ver tudo.</td></tr>`;
@@ -903,72 +888,41 @@ $("#itemForm").addEventListener("submit",async e=>{
   });
 });
 
-// ---- Editar grupo ----
-let editandoKey=null;
-function abrirEditar(key){
-  const g=grupo(key); if(!g) return;
-  editandoKey=key;
-  $("#edInfo").innerHTML=`<b>${esc(g.material)}</b><br>${esc(g.unidade)} · ${esc(g.localizacao)} — total ${g.total}`;
-  $("#edBulk").value=g.bulkQtde;
-  $("#edChips").innerHTML=g.idents.length
-    ? g.idents.map(i=>`<span class="pchip" title="${esc(i.patrimonio||"")}${i.patrimonio&&i.numero_serie?" / ":""}${esc(i.numero_serie||"")}">${esc(i.patrimonio||i.numero_serie)}${i.patrimonio&&i.numero_serie?" / "+esc(i.numero_serie):""}<span class="x" title="Remover esta unidade" onclick="removerIdent(${i.id},this)">×</span></span>`).join("")
-    : `<span class="hint">Nenhuma.</span>`;
-  $("#overlayEditar").classList.add("open");
-}
-function fecharEditar(){ $("#overlayEditar").classList.remove("open"); editandoKey=null; }
-$("#edFechar").onclick=fecharEditar;
-$("#overlayEditar").addEventListener("click",e=>{ if(e.target===$("#overlayEditar")) fecharEditar(); });
-$("#editarForm").addEventListener("submit",async e=>{
-  e.preventDefault();
-  const g=grupo(editandoKey); if(!g) return;
-  const val=Number($("#edBulk").value);
-  if(val<0||!Number.isInteger(val)){ toast("Quantidade inválida"); return; }
-  await guard(botaoSubmit(e.target),async()=>{
-  try{
-    // normaliza: 1ª linha a granel recebe o valor; demais são absorvidas
-    if(g.bulks.length){
-      if(val>0) await api(`/itens?id=eq.${g.bulks[0].id}`,{method:"PATCH",body:JSON.stringify({qtde:val})});
-      else await api(`/itens?id=eq.${g.bulks[0].id}`,{method:"PATCH",body:JSON.stringify({deleted_at:agora()})});
-      for(const b of g.bulks.slice(1)) await api(`/itens?id=eq.${b.id}`,{method:"PATCH",body:JSON.stringify({deleted_at:agora()})});
-    }else if(val>0){
-      await api("/itens",{method:"POST",body:JSON.stringify({material_id:g.material_id,localizacao_id:g.localizacao_id,qtde:val})});
-    }
-    fecharEditar(); await loadAll(); toast("Quantidade atualizada");
-  }catch(e2){ fail(e2); }
-  });
-});
-async function removerIdent(id,el){
-  const it=ITENS.find(i=>i.id===id); if(!it) return;
-  const rot=it.patrimonio||it.numero_serie;
-  if(!confirm(`Remover a unidade ${rot} de ${it.material} (${it.unidade})?`)) return;
-  await guard(el,async()=>{
-  try{
-    await api(`/itens?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({deleted_at:agora()})});
-    const key=editandoKey;
-    await loadAll();
-    if(key&&grupo(key)) abrirEditar(key); else fecharEditar();
-    toast("Unidade removida");
-  }catch(e){ fail(e); }
-  });
-}
-// ---- Registrar patrimônios em lote ----
-let loteKey=null;
+// ---- Editar item (qtde a granel + patrimônios/nº de série em lote) ----
+let loteKey=null, loteBulkInicial=0;
 function abrirLote(key){
   const g=grupo(key); if(!g) return;
-  loteKey=key;
+  loteKey=key; loteBulkInicial=g.bulkQtde;
   $("#ltInfo").innerHTML=`<b>${esc(g.material)}</b><br>${esc(g.unidade)} · ${esc(g.localizacao)} — ${g.total} unidade(s) física(s): ${g.idents.length} identificada(s), ${g.bulkQtde} a granel`;
+  $("#ltBulk").value=g.bulkQtde;
   let n=0;
   const linhas=[
     ...g.idents.map(i=>`<tr data-id="${i.id}"><td class="n">${++n}</td>
       <td><input value="${esc(i.patrimonio||"")}" placeholder="—" aria-label="Patrimônio ${n}"></td>
-      <td><input value="${esc(i.numero_serie||"")}" placeholder="—" aria-label="Nº de série ${n}"></td></tr>`),
+      <td><input value="${esc(i.numero_serie||"")}" placeholder="—" aria-label="Nº de série ${n}"></td>
+      <td><button type="button" class="iconbtn danger" title="Excluir esta unidade física (o total diminui)" onclick="excluirUnidadeLote(${i.id},this)">🗑</button></td></tr>`),
     ...Array.from({length:g.bulkQtde},()=>`<tr data-new><td class="n">${++n}</td>
       <td><input placeholder="—" aria-label="Patrimônio ${n}"></td>
-      <td><input placeholder="—" aria-label="Nº de série ${n}"></td></tr>`),
+      <td><input placeholder="—" aria-label="Nº de série ${n}"></td>
+      <td></td></tr>`),
   ];
   $("#ltBody").innerHTML=linhas.join("");
   $("#ltErro").hidden=true;
   $("#overlayLote").classList.add("open");
+}
+async function excluirUnidadeLote(id,el){
+  const it=ITENS.find(i=>i.id===id); if(!it) return;
+  const rot=it.patrimonio||it.numero_serie;
+  if(!confirm(`Excluir a unidade física ${rot} de ${it.material} (${it.unidade})?\nO total diminui em 1.`)) return;
+  await guard(el,async()=>{
+  try{
+    await api(`/itens?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({deleted_at:agora()})});
+    const key=loteKey;
+    await loadAll();
+    if(key&&grupo(key)) abrirLote(key); else fecharLote();
+    toast("Unidade excluída");
+  }catch(e){ fail(e); }
+  });
 }
 // validação em tempo real: marca campos duplicados (no formulário ou já cadastrados) em vermelho
 function validarLoteCampos(){
@@ -1024,7 +978,12 @@ $("#loteForm").addEventListener("submit",async e=>{
       novas.push({pat,serie});
     }
   }
-  if(!editadas.length&&!removidas.length&&!novas.length){ fecharLote(); return; }
+  const bulkDigitado=Number($("#ltBulk").value);
+  if(bulkDigitado<0||!Number.isInteger(bulkDigitado)){ toast("Quantidade a granel inválida"); return; }
+  // granel final = valor digitado, ajustado pelas identificações feitas nas linhas
+  const bulkAlvo=bulkDigitado + removidas.length - novas.length;
+  if(bulkAlvo<0){ toast("Não há unidades a granel suficientes para identificar tantas linhas"); return; }
+  if(!editadas.length&&!removidas.length&&!novas.length&&bulkDigitado===loteBulkInicial){ fecharLote(); return; }
   await guard(botaoSubmit(e.target),async()=>{
   try{
     for(const ed of editadas)
@@ -1033,21 +992,17 @@ $("#loteForm").addEventListener("submit",async e=>{
       await api(`/itens?id=eq.${r.id}`,{method:"PATCH",body:JSON.stringify({deleted_at:agora()})});
     for(const nv of novas)
       await api("/itens",{method:"POST",body:JSON.stringify({material_id:g.material_id,localizacao_id:g.localizacao_id,qtde:1,patrimonio:nv.pat,numero_serie:nv.serie})});
-    // mantém o total: identificar consome do granel; desidentificar devolve ao granel
-    const delta=removidas.length-novas.length;
-    if(delta>0){
-      if(g.bulks.length) await api(`/itens?id=eq.${g.bulks[0].id}`,{method:"PATCH",body:JSON.stringify({qtde:g.bulks[0].qtde+delta})});
-      else await api("/itens",{method:"POST",body:JSON.stringify({material_id:g.material_id,localizacao_id:g.localizacao_id,qtde:delta})});
-    }else if(delta<0){
-      let tirar=-delta;
-      for(const b of g.bulks){
-        if(tirar<=0) break;
-        const t=Math.min(b.qtde,tirar); tirar-=t;
-        if(b.qtde-t>0) await api(`/itens?id=eq.${b.id}`,{method:"PATCH",body:JSON.stringify({qtde:b.qtde-t})});
-        else await api(`/itens?id=eq.${b.id}`,{method:"PATCH",body:JSON.stringify({deleted_at:agora()})});
+    // normaliza o granel para o alvo: 1ª linha recebe o valor, demais são absorvidas
+    if(bulkAlvo!==g.bulkQtde||g.bulks.length>1){
+      if(g.bulks.length){
+        if(bulkAlvo>0) await api(`/itens?id=eq.${g.bulks[0].id}`,{method:"PATCH",body:JSON.stringify({qtde:bulkAlvo})});
+        else await api(`/itens?id=eq.${g.bulks[0].id}`,{method:"PATCH",body:JSON.stringify({deleted_at:agora()})});
+        for(const b of g.bulks.slice(1)) await api(`/itens?id=eq.${b.id}`,{method:"PATCH",body:JSON.stringify({deleted_at:agora()})});
+      }else if(bulkAlvo>0){
+        await api("/itens",{method:"POST",body:JSON.stringify({material_id:g.material_id,localizacao_id:g.localizacao_id,qtde:bulkAlvo})});
       }
     }
-    fecharLote(); await loadAll(); toast("Patrimônios registrados");
+    fecharLote(); await loadAll(); toast("Item atualizado");
   }catch(e2){ fail(e2); }
   });
 });
