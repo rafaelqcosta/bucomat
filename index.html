@@ -172,6 +172,10 @@ body.busy button:not(.loading){pointer-events:none;opacity:.55}
     <div class="stat"><b id="stQtde">–</b><span>unid. físicas</span></div>
     <div class="stat"><b id="stUn">–</b><span>unidades</span></div>
   </div>
+  <div id="userBox" style="display:none;align-items:center;gap:10px;font-size:12.5px;color:var(--muted)">
+    <span id="userEmail"></span>
+    <button class="btn small" id="sair">Sair</button>
+  </div>
 </header>
 
 <div class="tabs" role="tablist">
@@ -350,6 +354,21 @@ body.busy button:not(.loading){pointer-events:none;opacity:.55}
     </div>
   </form>
 </div>
+<!-- Login (contas criadas pelo administrador no painel do Supabase) -->
+<div class="overlay" id="overlayLogin" style="z-index:150;background:var(--bg)">
+  <form class="modal" id="loginForm">
+    <h2>Entrar no SISCOMAT</h2>
+    <label for="lgEmail">E-mail</label>
+    <input id="lgEmail" type="email" autocomplete="username" required>
+    <label for="lgSenha">Senha</label>
+    <input id="lgSenha" type="password" autocomplete="current-password" required>
+    <div id="lgErro" class="hint" style="color:var(--falta);margin-top:10px" hidden></div>
+    <div class="actions">
+      <button type="submit" class="btn primary" style="width:100%">Entrar</button>
+    </div>
+    <p class="hint" style="margin:12px 0 0">Acesso restrito. Contas são criadas pelo administrador.</p>
+  </form>
+</div>
 <div id="toast"></div>
 
 <script>
@@ -359,11 +378,54 @@ const $=s=>document.querySelector(s);
 const norm=s=>(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
-async function api(path,opts={}){
+// ---- Autenticação (Supabase Auth, sessão no localStorage) ----
+const AUTH="https://yjpqfukumgrowvxaumhu.supabase.co/auth/v1";
+let SESSAO=JSON.parse(localStorage.getItem("siscomat_sessao")||"null");
+function salvarSessao(s){ SESSAO=s; if(s) localStorage.setItem("siscomat_sessao",JSON.stringify(s)); else localStorage.removeItem("siscomat_sessao"); }
+async function authFetch(path,body){
+  const res=await fetch(AUTH+path,{method:"POST",headers:{apikey:KEY,"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const data=await res.json().catch(()=>({}));
+  if(!res.ok) throw new Error(data.error_description||data.msg||"falha de autenticação");
+  return data;
+}
+async function renovarSessao(){
+  if(!SESSAO?.refresh_token) return false;
+  try{
+    const d=await authFetch("/token?grant_type=refresh_token",{refresh_token:SESSAO.refresh_token});
+    salvarSessao({access_token:d.access_token,refresh_token:d.refresh_token,email:d.user?.email||SESSAO.email,expires_at:Date.now()+ (d.expires_in||3600)*1000});
+    return true;
+  }catch{ return false; }
+}
+function mostrarLogin(){ salvarSessao(null); $("#userBox").style.display="none"; $("#overlayLogin").classList.add("open"); $("#lgEmail").focus(); }
+function esconderLogin(){ $("#overlayLogin").classList.remove("open"); $("#userEmail").textContent=SESSAO.email||""; $("#userBox").style.display="flex"; }
+$("#loginForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const btn=e.target.querySelector('button[type="submit"]');
+  btn.classList.add("loading");
+  $("#lgErro").hidden=true;
+  try{
+    const d=await authFetch("/token?grant_type=password",{email:$("#lgEmail").value.trim(),password:$("#lgSenha").value});
+    salvarSessao({access_token:d.access_token,refresh_token:d.refresh_token,email:d.user?.email,expires_at:Date.now()+(d.expires_in||3600)*1000});
+    esconderLogin(); $("#lgSenha").value="";
+    await loadAll();
+  }catch(err){
+    $("#lgErro").textContent=/invalid/i.test(err.message)?"E-mail ou senha incorretos.":err.message;
+    $("#lgErro").hidden=false;
+  }finally{ btn.classList.remove("loading"); }
+});
+$("#sair").onclick=()=>{ mostrarLogin(); toast("Sessão encerrada"); };
+
+async function api(path,opts={},tentativa=0){
+  if(SESSAO && Date.now()>(SESSAO.expires_at||0)-60000) await renovarSessao(); // renova perto de expirar
+  const token=SESSAO?.access_token||KEY;
   const res=await fetch(API+path,{...opts,headers:{
-    apikey:KEY, Authorization:"Bearer "+KEY,
+    apikey:KEY, Authorization:"Bearer "+token,
     "Content-Type":"application/json", Prefer:"return=representation",
     ...(opts.headers||{})}});
+  if(res.status===401 && tentativa===0){
+    if(await renovarSessao()) return api(path,opts,1);
+    mostrarLogin(); throw new Error("sessão expirada — entre novamente");
+  }
   if(!res.ok){
     const t=await res.text();
     if(t.includes("23505")||res.status===409) throw new Error("já existe um registro com esse valor (deve ser único)");
@@ -1071,7 +1133,13 @@ document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
   $("#pane-cad").hidden=t.id!=="tab-cad";
 });
 
-loadAll().catch(e=>{ $("#count").textContent="Falha ao carregar o banco"; fail(e); });
+// ---- Inicialização: exige login ----
+if(SESSAO){
+  esconderLogin();
+  loadAll().catch(e=>{ $("#count").textContent="Falha ao carregar o banco"; fail(e); });
+}else{
+  mostrarLogin();
+}
 </script>
 </body>
 </html>
