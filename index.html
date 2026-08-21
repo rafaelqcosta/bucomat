@@ -123,6 +123,18 @@ footer{margin-top:28px;color:var(--muted);font-size:12.5px}
 .mvsec{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-top:12px}
 .mvsec>label{margin-top:0}
 .mvsec[hidden]{display:none}
+.dinput{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:5px 8px;font:13px "Public Sans",sans-serif}
+.acao{display:inline-block;font:600 11px "Public Sans",sans-serif;letter-spacing:.04em;border-radius:4px;padding:2px 8px;white-space:nowrap}
+.acao.INSERT{background:var(--ok-bg);color:var(--ok)}
+.acao.UPDATE{background:var(--chip-bg);color:var(--naval)}
+.acao.DELETE_LOGICO,.acao.DELETE{background:var(--falta-bg);color:var(--falta)}
+td.aud-dt{font:400 12.5px "IBM Plex Mono",monospace;color:var(--muted);white-space:nowrap}
+td.aud-det{font-size:13px;color:var(--muted)}
+td.aud-det b{color:var(--ink);font-weight:600}
+.fchip{border:1px solid var(--line);background:var(--chip-bg);color:var(--ink);border-radius:999px;padding:7px 16px;font:500 13.5px "Public Sans",sans-serif;cursor:pointer}
+.fchip.sel{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.fchip:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+#filtrosForm .chiprow{gap:8px;margin:8px 0 4px}
 /* cadastros */
 .cadgrid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:stretch}
 .cadcard{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;display:flex;flex-direction:column}
@@ -181,6 +193,7 @@ body.busy button:not(.loading){pointer-events:none;opacity:.55}
 <div class="tabs" role="tablist">
   <button class="tab" role="tab" id="tab-inv" aria-selected="true">Inventário</button>
   <button class="tab" role="tab" id="tab-cad" aria-selected="false">Cadastros</button>
+  <button class="tab" role="tab" id="tab-aud" aria-selected="false">Auditoria</button>
 </div>
 
 <section id="pane-inv" role="tabpanel">
@@ -235,6 +248,25 @@ body.busy button:not(.loading){pointer-events:none;opacity:.55}
     <ul id="listaMateriais" style="max-height:360px"></ul>
     <p style="font-size:12px;color:var(--muted);margin:8px 0 0">Renomear aqui muda o nome em todas as unidades. Novos itens são cadastrados somente por aqui.</p>
   </div>
+</section>
+
+<section id="pane-aud" role="tabpanel" hidden>
+  <div class="filters" id="filtersAud"></div>
+  <div class="count">
+    <span id="countAud">—</span>
+    <button class="btn small" id="resetAud" hidden>Limpar filtros</button>
+    <label class="hint" style="display:flex;align-items:center;gap:6px">De <input type="date" id="audDe" class="dinput"></label>
+    <label class="hint" style="display:flex;align-items:center;gap:6px">Até <input type="date" id="audAte" class="dinput"></label>
+    <span style="flex:1"></span>
+    <button class="btn" id="audAtualizar" title="Recarregar o log">↻ Atualizar</button>
+    <button class="btn" id="audCsv" title="Baixar CSV dos registros filtrados">⬇ CSV</button>
+    <button class="btn" id="audPdf" title="Gerar PDF dos registros filtrados">⬇ PDF</button>
+  </div>
+  <div class="tablewrap"><table>
+    <thead><tr><th style="width:130px">Data/Hora</th><th style="width:200px">Usuário</th><th style="width:96px">Ação</th><th style="width:110px">Tabela</th><th style="width:240px">Registro</th><th>Detalhes</th></tr></thead>
+    <tbody id="tbAud"><tr><td colspan="6" class="empty">Abra a aba para carregar o log…</td></tr></tbody>
+  </table></div>
+  <div style="margin-top:12px"><button class="btn" id="audMais" hidden>Carregar registros mais antigos</button></div>
 </section>
 
 <footer>Dados ao vivo do banco Supabase (projeto siscomat). Alterações feitas aqui valem para todos que abrirem a página.</footer>
@@ -311,24 +343,26 @@ body.busy button:not(.loading){pointer-events:none;opacity:.55}
 <div class="overlay" id="overlayFiltros">
   <form class="modal" id="filtrosForm">
     <h2>Mais filtros</h2>
-    <label for="xfRegistro">Identificação</label>
-    <select id="xfRegistro">
-      <option value="">Todos os itens</option>
-      <option value="patrimonio">Com patrimônio</option>
-      <option value="serie">Com nº de série</option>
-      <option value="sem">Sem identificação</option>
-    </select>
-    <label for="xfConferido">Conferido</label>
-    <select id="xfConferido">
-      <option value="">Todos</option>
-      <option value="conferido">✓ Conferido</option>
-      <option value="falta">✗ Falta</option>
-      <option value="nao_conferido">— Não conferido</option>
-    </select>
+    <label for="xfBusca">Busca livre</label>
+    <input id="xfBusca" autocomplete="off" placeholder="ex.: maca cesto">
+    <div class="hint">Cada palavra digitada precisa aparecer em alguma parte do item (material, localização, unidade, patrimônio ou nº de série) — "maca cesto" encontra "MACACÕES TIPO CESTO".</div>
+    <label>Identificação — combine à vontade</label>
+    <div class="chiprow" id="xfRegistro">
+      <button type="button" class="fchip" data-v="patrimonio">Com patrimônio</button>
+      <button type="button" class="fchip" data-v="serie">Com nº de série</button>
+      <button type="button" class="fchip" data-v="sem">Sem identificação</button>
+    </div>
+    <label>Conferido</label>
+    <div class="chiprow" id="xfConferido">
+      <button type="button" class="fchip" data-v="conferido">✓ Conferido</button>
+      <button type="button" class="fchip" data-v="falta">✗ Falta</button>
+      <button type="button" class="fchip" data-v="nao_conferido">— Não conferido</button>
+    </div>
     <div class="row">
       <div><label for="xfQtdeMin">Qtde mínima</label><input id="xfQtdeMin" type="number" min="0" placeholder="—"></div>
       <div><label for="xfQtdeMax">Qtde máxima</label><input id="xfQtdeMax" type="number" min="0" placeholder="—"></div>
     </div>
+    <div id="xfCount" style="margin-top:14px;font-size:14px"></div>
     <div class="actions">
       <button type="button" class="btn" id="xfLimpar">Limpar</button>
       <button type="button" class="btn" id="xfCancelar">Cancelar</button>
@@ -513,17 +547,28 @@ function valuesOf(g,key){
   }
   return [g[key]];
 }
-const extra={registro:"",conferido:"",qtdeMin:null,qtdeMax:null};
-function passaExtras(g){
-  if(extra.registro==="patrimonio"&&!g.idents.some(i=>i.patrimonio)) return false;
-  if(extra.registro==="serie"&&!g.idents.some(i=>i.numero_serie)) return false;
-  if(extra.registro==="sem"&&g.idents.length) return false;
-  if(extra.conferido&&g.conferido!==extra.conferido) return false;
-  if(extra.qtdeMin!=null&&g.total<extra.qtdeMin) return false;
-  if(extra.qtdeMax!=null&&g.total>extra.qtdeMax) return false;
+const extra={busca:"",registro:new Set(),conferido:new Set(),qtdeMin:null,qtdeMax:null};
+function haystack(g){
+  return norm(g.material+" "+g.localizacao+" "+g.unidade+" "+
+    g.idents.map(i=>(i.patrimonio||"")+" "+(i.numero_serie||"")).join(" "));
+}
+// x = conjunto de filtros extras (o aplicado ou o rascunho do modal)
+function passaExtrasCom(g,x){
+  if(x.busca){
+    const hay=haystack(g);
+    if(!norm(x.busca).split(/\s+/).filter(Boolean).every(t=>hay.includes(t))) return false;
+  }
+  if(x.registro.size){
+    const temPat=g.idents.some(i=>i.patrimonio), temSerie=g.idents.some(i=>i.numero_serie), semNada=!g.idents.length;
+    if(!((x.registro.has("patrimonio")&&temPat)||(x.registro.has("serie")&&temSerie)||(x.registro.has("sem")&&semNada))) return false;
+  }
+  if(x.conferido.size&&!x.conferido.has(g.conferido)) return false;
+  if(x.qtdeMin!=null&&g.total<x.qtdeMin) return false;
+  if(x.qtdeMax!=null&&g.total>x.qtdeMax) return false;
   return true;
 }
-function extrasAtivos(){ return (extra.registro?1:0)+(extra.conferido?1:0)+(extra.qtdeMin!=null?1:0)+(extra.qtdeMax!=null?1:0); }
+function passaExtras(g){ return passaExtrasCom(g,extra); }
+function extrasAtivos(){ return (extra.busca?1:0)+extra.registro.size+extra.conferido.size+(extra.qtdeMin!=null?1:0)+(extra.qtdeMax!=null?1:0); }
 function grupoPassa(g,exceto){
   return passaExtras(g) && FILTERS.every(f=>f.key===exceto||!state[f.key]||valuesOf(g,f.key).includes(state[f.key]));
 }
@@ -580,13 +625,16 @@ function buildCombo(f){
 function closeAll(){ document.querySelectorAll(".combo.open").forEach(c=>c._close()); }
 document.addEventListener("click",e=>{ if(!e.target.closest(".combo")) closeAll(); });
 FILTERS.forEach(f=>{ const c=buildCombo(f); combos[f.key]=c; $("#filters").append(c); });
+function limparExtras(){
+  extra.busca=""; extra.registro.clear(); extra.conferido.clear(); extra.qtdeMin=null; extra.qtdeMax=null;
+}
 $("#reset").onclick=()=>{
-  extra.registro=""; extra.conferido=""; extra.qtdeMin=null; extra.qtdeMax=null;
+  limparExtras();
   atualizarBotaoFiltros();
   FILTERS.forEach(f=>combos[f.key]._set(null));
 };
 
-// ---- Modal de mais filtros ----
+// ---- Modal de mais filtros (chips combináveis + contagem ao vivo) ----
 const XF_ROTULO={registro:{patrimonio:"Com patrimônio",serie:"Com nº de série",sem:"Sem identificação"},
                  conferido:{conferido:"Conferido",falta:"Falta",nao_conferido:"Não conferido"}};
 $("#filters").append($("#maisFiltros")); // botão fica depois dos combos
@@ -596,27 +644,52 @@ function atualizarBotaoFiltros(){
   b.textContent=n?`+ Filtros (${n})`:"+ Filtros";
   b.style.borderColor=n?"var(--accent)":"";
 }
+// lê o rascunho atual do modal (antes de aplicar)
+function lerModal(){
+  const sels=id=>new Set([...document.querySelectorAll(`#${id} .fchip.sel`)].map(b=>b.dataset.v));
+  return {
+    busca:$("#xfBusca").value.trim(),
+    registro:sels("xfRegistro"),
+    conferido:sels("xfConferido"),
+    qtdeMin:$("#xfQtdeMin").value===""?null:Number($("#xfQtdeMin").value),
+    qtdeMax:$("#xfQtdeMax").value===""?null:Number($("#xfQtdeMax").value),
+  };
+}
+function atualizarContagemModal(){
+  const x=lerModal();
+  const gs=GRUPOS.filter(g=>passaExtrasCom(g,x)&&FILTERS.every(f=>!state[f.key]||valuesOf(g,f.key).includes(state[f.key])));
+  const el=$("#xfCount");
+  if(!gs.length){ el.innerHTML=`<b style="color:var(--falta)">Nenhum item</b> com essa combinação`; return; }
+  el.innerHTML=`<b style="color:var(--ok)">${gs.length} ${gs.length===1?"item":"itens"}</b> · ${gs.reduce((a,g)=>a+g.total,0)} unid. físicas com esses filtros`;
+}
 $("#maisFiltros").onclick=()=>{
-  $("#xfRegistro").value=extra.registro;
-  $("#xfConferido").value=extra.conferido;
+  $("#xfBusca").value=extra.busca;
+  document.querySelectorAll("#xfRegistro .fchip").forEach(b=>b.classList.toggle("sel",extra.registro.has(b.dataset.v)));
+  document.querySelectorAll("#xfConferido .fchip").forEach(b=>b.classList.toggle("sel",extra.conferido.has(b.dataset.v)));
   $("#xfQtdeMin").value=extra.qtdeMin??"";
   $("#xfQtdeMax").value=extra.qtdeMax??"";
+  atualizarContagemModal();
   $("#overlayFiltros").classList.add("open");
+  $("#xfBusca").focus();
 };
+document.querySelectorAll("#xfRegistro .fchip, #xfConferido .fchip").forEach(b=>{
+  b.onclick=()=>{ b.classList.toggle("sel"); atualizarContagemModal(); };
+});
+$("#xfBusca").addEventListener("input",atualizarContagemModal);
+$("#xfQtdeMin").addEventListener("input",atualizarContagemModal);
+$("#xfQtdeMax").addEventListener("input",atualizarContagemModal);
 function fecharFiltros(){ $("#overlayFiltros").classList.remove("open"); }
 $("#xfCancelar").onclick=fecharFiltros;
 $("#overlayFiltros").addEventListener("click",e=>{ if(e.target===$("#overlayFiltros")) fecharFiltros(); });
 $("#filtrosForm").addEventListener("submit",e=>{
   e.preventDefault();
-  extra.registro=$("#xfRegistro").value;
-  extra.conferido=$("#xfConferido").value;
-  extra.qtdeMin=$("#xfQtdeMin").value===""?null:Number($("#xfQtdeMin").value);
-  extra.qtdeMax=$("#xfQtdeMax").value===""?null:Number($("#xfQtdeMax").value);
-  if(extra.qtdeMin!=null&&extra.qtdeMax!=null&&extra.qtdeMin>extra.qtdeMax){ toast("Qtde mínima maior que a máxima"); return; }
+  const x=lerModal();
+  if(x.qtdeMin!=null&&x.qtdeMax!=null&&x.qtdeMin>x.qtdeMax){ toast("Qtde mínima maior que a máxima"); return; }
+  Object.assign(extra,x);
   atualizarBotaoFiltros(); fecharFiltros(); renderTable();
 });
 $("#xfLimpar").onclick=()=>{
-  extra.registro=""; extra.conferido=""; extra.qtdeMin=null; extra.qtdeMax=null;
+  limparExtras();
   atualizarBotaoFiltros(); fecharFiltros(); renderTable();
 };
 
@@ -627,8 +700,9 @@ const CONF_TITLE={conferido:"Conferido", falta:"Falta", nao_conferido:"Não conf
 function filteredGroups(){ return GRUPOS.filter(g=>grupoPassa(g,null)); }
 function filtrosAtivos(){
   const partes=FILTERS.filter(f=>state[f.key]).map(f=>`${f.tag}: ${state[f.key]}`);
-  if(extra.registro) partes.push("Identificação: "+XF_ROTULO.registro[extra.registro]);
-  if(extra.conferido) partes.push("Conferido: "+XF_ROTULO.conferido[extra.conferido]);
+  if(extra.busca) partes.push(`Busca: "${extra.busca}"`);
+  if(extra.registro.size) partes.push("Identificação: "+[...extra.registro].map(v=>XF_ROTULO.registro[v]).join(" ou "));
+  if(extra.conferido.size) partes.push("Conferido: "+[...extra.conferido].map(v=>XF_ROTULO.conferido[v]).join(" ou "));
   if(extra.qtdeMin!=null) partes.push("Qtde ≥ "+extra.qtdeMin);
   if(extra.qtdeMax!=null) partes.push("Qtde ≤ "+extra.qtdeMax);
   return partes.join(" · ");
