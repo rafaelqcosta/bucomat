@@ -345,7 +345,7 @@ body.busy button:not(.loading){pointer-events:none;opacity:.55}
     <h2>Mais filtros</h2>
     <label for="xfBusca">Busca livre</label>
     <input id="xfBusca" autocomplete="off" placeholder="ex.: maca cesto">
-    <div class="hint">Cada palavra digitada precisa aparecer em alguma parte do item (material, localização, unidade, patrimônio ou nº de série) — "maca cesto" encontra "MACACÕES TIPO CESTO".</div>
+    <div class="hint">Cada palavra digitada precisa aparecer no nome do material — "maca cesto" encontra "MACACÕES TIPO CESTO".</div>
     <label>Identificação — combine à vontade</label>
     <div class="chiprow" id="xfRegistro">
       <button type="button" class="fchip" data-v="patrimonio">Com patrimônio</button>
@@ -549,8 +549,8 @@ function valuesOf(g,key){
 }
 const extra={busca:"",registro:new Set(),conferido:new Set(),qtdeMin:null,qtdeMax:null};
 function haystack(g){
-  return norm(g.material+" "+g.localizacao+" "+g.unidade+" "+
-    g.idents.map(i=>(i.patrimonio||"")+" "+(i.numero_serie||"")).join(" "));
+  // busca livre olha apenas o nome do material
+  return norm(g.material);
 }
 // x = conjunto de filtros extras (o aplicado ou o rascunho do modal)
 function passaExtrasCom(g,x){
