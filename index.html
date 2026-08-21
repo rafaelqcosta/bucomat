@@ -29,7 +29,7 @@
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 "Public Sans",system-ui,sans-serif}
-.wrap{max-width:1120px;margin:0 auto;padding:28px 20px 64px}
+.wrap{max-width:1160px;margin:0 auto;padding:28px 20px 64px}
 header{display:flex;flex-wrap:wrap;align-items:end;gap:16px 28px;border-bottom:3px solid var(--accent);padding-bottom:18px;margin-bottom:20px}
 h1{font:800 clamp(24px,4vw,34px)/1.1 Archivo,sans-serif;margin:0;text-wrap:balance}
 h1 small{display:block;font:600 12px/1.4 "Public Sans",sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
@@ -78,8 +78,12 @@ td.q{width:1%;white-space:nowrap}
 .qbox{display:inline-flex;align-items:center;gap:4px}
 .qbox b{font:500 14px "IBM Plex Mono",monospace;min-width:26px;text-align:center}
 .qbox button{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:4px;width:22px;height:22px;line-height:1;cursor:pointer;font-weight:700}
-td.pat{font:400 13px "IBM Plex Mono",monospace;color:var(--muted);white-space:nowrap}
 .badge{display:inline-block;font:600 11px "Public Sans",sans-serif;letter-spacing:.05em;background:var(--chip-bg);color:var(--naval);border-radius:4px;padding:2px 8px;white-space:nowrap}
+.pchip{display:inline-block;font:500 12px "IBM Plex Mono",monospace;background:var(--chip-bg);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:1px 8px;margin:1px 3px 1px 0;white-space:nowrap}
+.pchip.sel{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.pchip .x{margin-left:6px;color:var(--muted);cursor:pointer;font-weight:700}
+.pchip .x:hover{color:var(--accent)}
+.chiprow{display:flex;flex-wrap:wrap;gap:2px;margin:6px 0}
 .chkbtn{border:0;background:none;cursor:pointer;font-size:16px;font-weight:700;padding:4px 10px;border-radius:6px}
 .chkbtn.conferido{color:var(--ok);background:var(--ok-bg)}
 .chkbtn.falta{color:var(--falta);background:var(--falta-bg)}
@@ -89,26 +93,28 @@ td.acts{width:1%;white-space:nowrap;text-align:right}
 .legend{display:flex;gap:14px;margin:10px 2px;font-size:13px;color:var(--muted);flex-wrap:wrap}
 footer{margin-top:28px;color:var(--muted);font-size:12.5px}
 /* modal */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;padding:6vh 16px;z-index:100}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;padding:6vh 16px;z-index:100;overflow-y:auto}
 .overlay.open{display:flex}
-.modal{background:var(--surface);border:1px solid var(--line);border-radius:10px;width:100%;max-width:460px;padding:20px}
+.modal{background:var(--surface);border:1px solid var(--line);border-radius:10px;width:100%;max-width:480px;padding:20px}
 .modal h2{font:700 18px Archivo,sans-serif;margin:0 0 14px}
 .modal label{display:block;font:600 11.5px "Public Sans",sans-serif;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:12px 0 4px}
 .modal input,.modal select{width:100%;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:9px 12px;font:inherit}
 .modal input:focus,.modal select:focus{outline:2px solid var(--accent);outline-offset:1px}
+.modal input:disabled{opacity:.7;background:var(--chip-bg)}
 .modal .row{display:flex;gap:10px}
 .modal .row>*{flex:1}
 .modal .actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+.modal .hint{font-size:12.5px;color:var(--muted)}
 /* cadastros */
-.cadgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px}
-.modal input:disabled{opacity:.7;background:var(--chip-bg)}
-.cadcard{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px}
+.cadgrid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:stretch}
+.cadcard{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;display:flex;flex-direction:column}
 .cadcard h2{font:700 16px Archivo,sans-serif;margin:0 0 12px}
-.cadcard ul{list-style:none;margin:0 0 12px;padding:0}
+.cadcard ul{list-style:none;margin:0 0 12px;padding:0;max-height:300px;overflow-y:auto;flex:1}
 .cadcard li{display:flex;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px solid var(--line)}
 .cadcard li:last-child{border-bottom:0}
 .cadcard li .nm{flex:1}
 .cadcard li .cnt{color:var(--muted);font:400 12px "IBM Plex Mono",monospace}
+.cadfull{margin-top:20px}
 .addrow{display:flex;gap:8px}
 .addrow input,.addrow select{flex:1;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font:inherit}
 #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:8px;font-size:13.5px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:200}
@@ -138,7 +144,7 @@ footer{margin-top:28px;color:var(--muted);font-size:12.5px}
 <header>
   <h1><small>SISCOMAT · Controle de Materiais</small>Inventário SISCOMAT</h1>
   <div class="stats">
-    <div class="stat"><b id="stItens">–</b><span>itens</span></div>
+    <div class="stat"><b id="stMateriais">–</b><span>materiais</span></div>
     <div class="stat"><b id="stQtde">–</b><span>unid. físicas</span></div>
     <div class="stat"><b id="stUn">–</b><span>unidades</span></div>
   </div>
@@ -157,14 +163,13 @@ footer{margin-top:28px;color:var(--muted);font-size:12.5px}
     <span style="flex:1"></span>
     <button class="btn" id="expCsv" title="Baixar CSV dos itens filtrados">⬇ CSV</button>
     <button class="btn" id="expPdf" title="Gerar PDF dos itens filtrados">⬇ PDF</button>
-    <button class="btn primary" id="novoItem">+ Novo item</button>
   </div>
   <div class="legend">
-    <span>Conferido: <b style="color:var(--ok)">✓</b> conferido · <b style="color:var(--falta)">✗</b> falta · <b>—</b> não conferido. Clique no símbolo para alternar.</span>
+    <span>Conferido: <b style="color:var(--ok)">✓</b> conferido · <b style="color:var(--falta)">✗</b> falta · <b>—</b> não conferido. O clique vale para todas as unidades do material naquela localização.</span>
   </div>
   <div class="tablewrap"><table>
-    <thead><tr><th>Qtde</th><th>Material</th><th>Patrimônio</th><th>Localização</th><th>Unidade/Viatura</th><th style="text-align:center">Conferido</th><th></th></tr></thead>
-    <tbody id="tb"><tr><td colspan="7" class="empty">Carregando dados do banco…</td></tr></tbody>
+    <thead><tr><th>Qtde</th><th>Material</th><th>Patrimônio</th><th>Nº de Série</th><th>Localização</th><th>Unidade/Viatura</th><th style="text-align:center">Conferido</th><th></th></tr></thead>
+    <tbody id="tb"><tr><td colspan="8" class="empty">Carregando dados do banco…</td></tr></tbody>
   </table></div>
 </section>
 
@@ -179,14 +184,6 @@ footer{margin-top:28px;color:var(--muted);font-size:12.5px}
       </div>
     </div>
     <div class="cadcard">
-      <h2>Materiais (catálogo)</h2>
-      <div class="addrow" style="margin-bottom:10px">
-        <input id="buscaMat" placeholder="Buscar material…" aria-label="Buscar material">
-      </div>
-      <ul id="listaMateriais" style="max-height:320px;overflow-y:auto"></ul>
-      <p style="font-size:12px;color:var(--muted);margin:8px 0 0">Renomear aqui muda o nome em todas as unidades. Materiais novos são criados pelo "+ Novo item".</p>
-    </div>
-    <div class="cadcard">
       <h2>Localizações</h2>
       <div class="addrow" style="margin-bottom:10px">
         <select id="cadUnidadeSel" aria-label="Unidade das localizações"></select>
@@ -198,41 +195,81 @@ footer{margin-top:28px;color:var(--muted);font-size:12.5px}
       </div>
     </div>
   </div>
+  <div class="cadcard cadfull">
+    <h2>Materiais (catálogo)</h2>
+    <div class="addrow" style="margin-bottom:10px">
+      <input id="buscaMat" placeholder="Buscar material…" aria-label="Buscar material">
+      <button class="btn primary" id="novoItem">+ Novo item</button>
+    </div>
+    <ul id="listaMateriais" style="max-height:360px"></ul>
+    <p style="font-size:12px;color:var(--muted);margin:8px 0 0">Renomear aqui muda o nome em todas as unidades. Novos itens são cadastrados somente por aqui.</p>
+  </div>
 </section>
 
 <footer>Dados ao vivo do banco Supabase (projeto siscomat). Alterações feitas aqui valem para todos que abrirem a página.</footer>
 </div>
 
+<!-- Novo item (só pelo catálogo) -->
 <div class="overlay" id="overlay">
   <form class="modal" id="itemForm">
-    <h2 id="modalTitle">Novo item</h2>
+    <h2>Novo item</h2>
     <label for="fMaterial">Material</label>
     <input id="fMaterial" list="dlMateriais" autocomplete="off" required>
     <datalist id="dlMateriais"></datalist>
-    <div id="fResumo" style="margin-top:8px;font-size:12.5px;color:var(--muted)"></div>
+    <div id="fResumo" class="hint" style="margin-top:8px"></div>
     <div class="row">
-      <div><label for="fQtde">Qtde</label><input id="fQtde" type="number" min="0" value="1" required></div>
       <div><label for="fPat">Patrimônio (opcional)</label><input id="fPat"></div>
+      <div><label for="fSerie">Nº de Série (opcional)</label><input id="fSerie"></div>
     </div>
-    <div id="grpDestino">
-      <label for="fUnidade">Unidade/Viatura</label>
-      <select id="fUnidade"></select>
-      <label for="fLocal">Localização</label>
-      <select id="fLocal"></select>
-    </div>
+    <label for="fQtde">Qtde</label>
+    <input id="fQtde" type="number" min="1" value="1" required>
+    <div class="hint" id="fQtdeHint" hidden>Item com patrimônio/nº de série identifica 1 unidade física — qtde fixa em 1.</div>
+    <label for="fUnidade">Unidade/Viatura</label>
+    <select id="fUnidade"></select>
+    <label for="fLocal">Localização</label>
+    <select id="fLocal"></select>
     <div class="actions">
       <button type="button" class="btn" id="cancelar">Cancelar</button>
-      <button type="submit" class="btn primary" id="salvar">Salvar</button>
+      <button type="submit" class="btn primary">Salvar</button>
     </div>
   </form>
 </div>
+
+<!-- Editar grupo (qtde a granel + unidades identificadas) -->
+<div class="overlay" id="overlayEditar">
+  <form class="modal" id="editarForm">
+    <h2>Editar item</h2>
+    <div id="edInfo" style="font-size:13.5px;margin-bottom:4px"></div>
+    <label for="edBulk">Unidades sem identificação (a granel)</label>
+    <input id="edBulk" type="number" min="0">
+    <label>Unidades identificadas</label>
+    <div class="chiprow" id="edChips"></div>
+    <div class="row">
+      <div><input id="edNovoPat" placeholder="Adicionar patrimônio…" aria-label="Novo patrimônio"></div>
+      <button type="button" class="btn" id="edAddPat">+ Patrimônio</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <div><input id="edNovaSerie" placeholder="Adicionar nº de série…" aria-label="Novo nº de série"></div>
+      <button type="button" class="btn" id="edAddSerie">+ Nº Série</button>
+    </div>
+    <p class="hint" style="margin:10px 0 0">Cada patrimônio/nº de série adicionado vira 1 unidade física neste local. O × do chip remove aquela unidade. Para renomear o material use Cadastros; para mover, o botão Mover.</p>
+    <div class="actions">
+      <button type="button" class="btn" id="edFechar">Fechar</button>
+      <button type="submit" class="btn primary">Salvar qtde</button>
+    </div>
+  </form>
+</div>
+
+<!-- Mover grupo -->
 <div class="overlay" id="overlayMover">
   <form class="modal" id="moverForm">
     <h2>Mover material</h2>
     <div id="mvInfo" style="font-size:13.5px;margin-bottom:4px"></div>
-    <div id="mvResumo" style="font-size:12.5px;color:var(--muted)"></div>
-    <label for="mvQtde">Quantidade a mover</label>
-    <input id="mvQtde" type="number" min="1" value="1" required>
+    <div id="mvResumo" class="hint"></div>
+    <label for="mvQtde">Unidades a granel a mover (<span id="mvBulkMax">0</span> disponíveis)</label>
+    <input id="mvQtde" type="number" min="0" value="0">
+    <label>Unidades identificadas a mover (clique para selecionar)</label>
+    <div class="chiprow" id="mvChips"></div>
     <label for="mvUnidade">Unidade/Viatura de destino</label>
     <select id="mvUnidade" required></select>
     <label for="mvLocal">Localização de destino</label>
@@ -257,14 +294,19 @@ async function api(path,opts={}){
     apikey:KEY, Authorization:"Bearer "+KEY,
     "Content-Type":"application/json", Prefer:"return=representation",
     ...(opts.headers||{})}});
-  if(!res.ok){ const t=await res.text(); throw new Error(res.status+": "+t); }
+  if(!res.ok){
+    const t=await res.text();
+    if(t.includes("23505")||res.status===409) throw new Error("já existe um registro com esse valor (deve ser único)");
+    throw new Error(res.status+": "+t);
+  }
   const txt=await res.text();
   return txt?JSON.parse(txt):null;
 }
-function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),2200); }
-function fail(e){ console.error(e); toast("Erro ao salvar: "+e.message); }
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),2600); }
+function fail(e){ console.error(e); toast("Erro: "+e.message); }
+const agora=()=>new Date().toISOString();
 
-let UNIDADES=[], LOCAIS=[], ITENS=[], MATERIAIS=[];
+let UNIDADES=[], LOCAIS=[], ITENS=[], MATERIAIS=[], GRUPOS=[];
 async function loadAll(){
   [UNIDADES,LOCAIS,ITENS,MATERIAIS]=await Promise.all([
     api("/unidades?deleted_at=is.null&order=nome"),
@@ -272,28 +314,64 @@ async function loadAll(){
     api("/inventario?order=unidade,material"),
     api("/materiais?deleted_at=is.null&order=nome"),
   ]);
+  agrupar();
   renderAll();
 }
+// Agrupa alocações por (material, localização): linhas a granel + unidades identificadas
+function agrupar(){
+  const map=new Map();
+  ITENS.forEach(i=>{
+    const k=i.material_id+"_"+i.localizacao_id;
+    let g=map.get(k);
+    if(!g){
+      g={key:k, material:i.material, material_id:i.material_id,
+         localizacao:i.localizacao, localizacao_id:i.localizacao_id,
+         unidade:i.unidade, unidade_id:i.unidade_id,
+         total:0, bulks:[], idents:[], ids:[]};
+      map.set(k,g);
+    }
+    g.total+=i.qtde; g.ids.push(i.id);
+    if(i.patrimonio||i.numero_serie) g.idents.push(i); else g.bulks.push(i);
+  });
+  GRUPOS=[...map.values()];
+  GRUPOS.forEach(g=>{
+    g.bulkQtde=g.bulks.reduce((a,b)=>a+b.qtde,0);
+    // conferido do grupo: pior estado entre as linhas (falta > não conferido > conferido)
+    const estados=new Set([...g.bulks,...g.idents].map(i=>i.conferido));
+    g.conferido=estados.has("falta")?"falta":estados.has("nao_conferido")?"nao_conferido":"conferido";
+  });
+}
+function grupo(key){ return GRUPOS.find(g=>g.key===key); }
 function renderAll(){
-  $("#stItens").textContent=ITENS.length;
+  $("#stMateriais").textContent=MATERIAIS.length;
   $("#stQtde").textContent=ITENS.reduce((a,d)=>a+d.qtde,0);
   $("#stUn").textContent=UNIDADES.length;
-  renderTable(); renderCombosOptions(); renderCadastros();
+  renderTable(); renderCadastros();
 }
 
-// ---- Filtros (combobox pesquisável) ----
+// ---- Filtros (combobox pesquisável, opera sobre grupos) ----
 const FILTERS=[
-  {key:"material",   tag:"Material",        all:"Todos os materiais"},
-  {key:"patrimonio", tag:"Patrimônio",      all:"Todos os patrimônios"},
-  {key:"localizacao",tag:"Localização",     all:"Todas as localizações"},
-  {key:"unidade",    tag:"Unidade/Viatura", all:"Todas as unidades"},
+  {key:"material",   tag:"Material",           all:"Todos os materiais"},
+  {key:"patrimonio", tag:"Patrimônio/Nº Série",all:"Todos os patrimônios"},
+  {key:"localizacao",tag:"Localização",        all:"Todas as localizações"},
+  {key:"unidade",    tag:"Unidade/Viatura",    all:"Todas as unidades"},
 ];
 const state={};
-const valueOf=(d,key)=>key==="patrimonio"?(d.patrimonio||"—"):d[key];
+function valuesOf(g,key){
+  if(key==="patrimonio"){
+    const vs=g.idents.flatMap(i=>[i.patrimonio,i.numero_serie]).filter(Boolean);
+    return vs.length?vs:["—"];
+  }
+  return [g[key]];
+}
+function grupoPassa(g,exceto){
+  return FILTERS.every(f=>f.key===exceto||!state[f.key]||valuesOf(g,f.key).includes(state[f.key]));
+}
 function optionsFor(key){
-  const rows=ITENS.filter(d=>FILTERS.every(f=>f.key===key||!state[f.key]||valueOf(d,f.key)===state[f.key]));
   const m=new Map();
-  rows.forEach(d=>{const v=valueOf(d,key); m.set(v,(m.get(v)||0)+1)});
+  GRUPOS.filter(g=>grupoPassa(g,key)).forEach(g=>{
+    new Set(valuesOf(g,key)).forEach(v=>m.set(v,(m.get(v)||0)+1));
+  });
   return [...m.entries()].sort((a,b)=>String(a[0]).localeCompare(String(b[0]),"pt"));
 }
 const combos={};
@@ -336,58 +414,58 @@ function buildCombo(f){
     if(e.key==="Enter"){ e.preventDefault(); const first=list.querySelector("li[data-v]"); if(first) set(first.dataset.v); }
   });
   list.addEventListener("click",e=>{ const li=e.target.closest("li[data-v]"); if(li) set(li.dataset.v===state[f.key]?null:li.dataset.v); });
-  root._close=close; root._set=set; root._renderList=renderList;
+  root._close=close; root._set=set;
   return root;
 }
 function closeAll(){ document.querySelectorAll(".combo.open").forEach(c=>c._close()); }
 document.addEventListener("click",e=>{ if(!e.target.closest(".combo")) closeAll(); });
 FILTERS.forEach(f=>{ const c=buildCombo(f); combos[f.key]=c; $("#filters").append(c); });
-function renderCombosOptions(){ /* opções derivam de ITENS a cada abertura; nada a fazer aqui */ }
 $("#reset").onclick=()=>FILTERS.forEach(f=>combos[f.key]._set(null));
 
-// ---- Tabela do inventário ----
+// ---- Tabela do inventário (uma linha por grupo material×localização) ----
 const CONF_NEXT={conferido:"falta", falta:"nao_conferido", nao_conferido:"conferido"};
 const CONF_ICON={conferido:"✓", falta:"✗", nao_conferido:"—"};
 const CONF_TITLE={conferido:"Conferido", falta:"Falta", nao_conferido:"Não conferido"};
-function filteredRows(){
-  return ITENS.filter(d=>FILTERS.every(f=>!state[f.key]||valueOf(d,f.key)===state[f.key]));
-}
-function filtrosAtivos(){
-  return FILTERS.filter(f=>state[f.key]).map(f=>`${f.tag}: ${state[f.key]}`).join(" · ");
-}
+function filteredGroups(){ return GRUPOS.filter(g=>grupoPassa(g,null)); }
+function filtrosAtivos(){ return FILTERS.filter(f=>state[f.key]).map(f=>`${f.tag}: ${state[f.key]}`).join(" · "); }
+const chips=vs=>vs.length?vs.map(v=>`<span class="pchip">${esc(v)}</span>`).join(""):"—";
 function renderTable(){
-  const rows=filteredRows();
+  const gs=filteredGroups();
   $("#reset").hidden=!FILTERS.some(f=>state[f.key]);
-  $("#count").textContent=rows.length+" de "+ITENS.length+" itens";
-  $("#tb").innerHTML=rows.length?rows.map(d=>`<tr>
+  $("#count").textContent=gs.length+" de "+GRUPOS.length+" itens · "+gs.reduce((a,g)=>a+g.total,0)+" unid. físicas";
+  $("#tb").innerHTML=gs.length?gs.map(g=>`<tr>
     <td class="q" data-label="Qtde"><span class="qbox">
-      <button type="button" title="Diminuir" onclick="mudarQtde(${d.id},-1)">−</button><b>${d.qtde}</b><button type="button" title="Aumentar" onclick="mudarQtde(${d.id},1)">+</button>
+      <button type="button" title="Remover 1 (a granel)" onclick="mudarQtde('${g.key}',-1)">−</button><b>${g.total}</b><button type="button" title="Adicionar 1 (a granel)" onclick="mudarQtde('${g.key}',1)">+</button>
     </span></td>
-    <td class="m" data-label="Material">${esc(d.material)}</td>
-    <td class="pat" data-label="Patrimônio">${d.patrimonio?esc(d.patrimonio):"—"}</td>
-    <td data-label="Localização">${esc(d.localizacao)}</td>
-    <td data-label="Unidade/Viatura"><span class="badge">${esc(d.unidade)}</span></td>
-    <td data-label="Conferido" style="text-align:center"><button type="button" class="chkbtn ${d.conferido}" title="${CONF_TITLE[d.conferido]} — clique para alternar" onclick="ciclarConferido(${d.id})">${CONF_ICON[d.conferido]}</button></td>
-    <td class="acts"><button class="btn small" onclick="moverItem(${d.id})">Mover</button> <button class="btn small" onclick="editarItem(${d.id})">Editar</button> <button class="btn small danger" onclick="excluirItem(${d.id})">Excluir</button></td>
-  </tr>`).join(""):`<tr><td colspan="7" class="empty">Nenhum material encontrado. Limpe os filtros para ver tudo.</td></tr>`;
+    <td class="m" data-label="Material">${esc(g.material)}</td>
+    <td data-label="Patrimônio">${chips(g.idents.map(i=>i.patrimonio).filter(Boolean))}</td>
+    <td data-label="Nº de Série">${chips(g.idents.map(i=>i.numero_serie).filter(Boolean))}</td>
+    <td data-label="Localização">${esc(g.localizacao)}</td>
+    <td data-label="Unidade/Viatura"><span class="badge">${esc(g.unidade)}</span></td>
+    <td data-label="Conferido" style="text-align:center"><button type="button" class="chkbtn ${g.conferido}" title="${CONF_TITLE[g.conferido]} — clique para alternar (todo o grupo)" onclick="ciclarConferido('${g.key}')">${CONF_ICON[g.conferido]}</button></td>
+    <td class="acts"><button class="btn small" onclick="abrirMover('${g.key}')">Mover</button> <button class="btn small" onclick="abrirEditar('${g.key}')">Editar</button> <button class="btn small danger" onclick="excluirGrupo('${g.key}')">Excluir</button></td>
+  </tr>`).join(""):`<tr><td colspan="8" class="empty">Nenhum material encontrado. Limpe os filtros para ver tudo.</td></tr>`;
 }
 
 // ---- Exportação (respeita filtros ativos) ----
 function hoje(){ return new Date().toLocaleDateString("pt-BR"); }
 $("#expCsv").onclick=()=>{
-  const rows=filteredRows();
+  const gs=filteredGroups();
   const cell=v=>{ v=String(v??""); return /[";\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
-  const linhas=[["Qtde","Material","Patrimônio","Localização","Unidade/Viatura","Conferido"]]
-    .concat(rows.map(d=>[d.qtde,d.material,d.patrimonio||"",d.localizacao,d.unidade,CONF_TITLE[d.conferido]]));
+  const linhas=[["Qtde","Material","Patrimônios","Nº de Série","Localização","Unidade/Viatura","Conferido"]]
+    .concat(gs.map(g=>[g.total,g.material,
+      g.idents.map(i=>i.patrimonio).filter(Boolean).join(", "),
+      g.idents.map(i=>i.numero_serie).filter(Boolean).join(", "),
+      g.localizacao,g.unidade,CONF_TITLE[g.conferido]]));
   const csv="﻿"+linhas.map(l=>l.map(cell).join(";")).join("\r\n");
   const a=document.createElement("a");
   a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
   a.download=`siscomat_${new Date().toISOString().slice(0,10)}.csv`;
   a.click(); URL.revokeObjectURL(a.href);
-  toast(`CSV com ${rows.length} itens gerado`);
+  toast(`CSV com ${gs.length} itens gerado`);
 };
 $("#expPdf").onclick=()=>{
-  const rows=filteredRows();
+  const gs=filteredGroups();
   const filtros=filtrosAtivos();
   const w=window.open("","_blank");
   if(!w){ toast("Libere pop-ups para gerar o PDF"); return; }
@@ -407,80 +485,91 @@ $("#expPdf").onclick=()=>{
   @media print{ @page{margin:14mm} }
 </style></head><body>
 <h1>Inventário SISCOMAT</h1>
-<div class="sub">Gerado em ${hoje()} · ${rows.length} itens · ${rows.reduce((a,d)=>a+d.qtde,0)} unidades físicas${filtros?` · Filtros — ${esc(filtros)}`:" · Relatório completo"}</div>
-<table><thead><tr><th style="text-align:right">Qtde</th><th>Material</th><th>Patrimônio</th><th>Localização</th><th>Unidade/Viatura</th><th>Conferido</th></tr></thead><tbody>
-${rows.map(d=>`<tr><td class="q">${d.qtde}</td><td>${esc(d.material)}</td><td>${d.patrimonio?esc(d.patrimonio):"—"}</td><td>${esc(d.localizacao)}</td><td>${esc(d.unidade)}</td><td class="c-${d.conferido}">${CONF_ICON[d.conferido]} ${CONF_TITLE[d.conferido]}</td></tr>`).join("")}
+<div class="sub">Gerado em ${hoje()} · ${gs.length} itens · ${gs.reduce((a,g)=>a+g.total,0)} unidades físicas${filtros?` · Filtros — ${esc(filtros)}`:" · Relatório completo"}</div>
+<table><thead><tr><th style="text-align:right">Qtde</th><th>Material</th><th>Patrimônios</th><th>Nº de Série</th><th>Localização</th><th>Unidade/Viatura</th><th>Conferido</th></tr></thead><tbody>
+${gs.map(g=>`<tr><td class="q">${g.total}</td><td>${esc(g.material)}</td><td>${esc(g.idents.map(i=>i.patrimonio).filter(Boolean).join(", "))||"—"}</td><td>${esc(g.idents.map(i=>i.numero_serie).filter(Boolean).join(", "))||"—"}</td><td>${esc(g.localizacao)}</td><td>${esc(g.unidade)}</td><td class="c-${g.conferido}">${CONF_ICON[g.conferido]} ${CONF_TITLE[g.conferido]}</td></tr>`).join("")}
 </tbody></table>
 </body></html>`);
   w.document.close();
   w.onload=()=>{ w.focus(); w.print(); };
 };
 
-// ---- Mutações ----
-async function mudarQtde(id,delta){
-  const it=ITENS.find(i=>i.id===id); if(!it) return;
-  const nova=it.qtde+delta;
-  if(nova<0) return;
-  try{ await api(`/itens?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({qtde:nova})}); it.qtde=nova; renderAll(); }
-  catch(e){ fail(e); }
+// ---- Mutações rápidas na tabela ----
+async function mudarQtde(key,delta){
+  const g=grupo(key); if(!g) return;
+  try{
+    if(delta>0){
+      if(g.bulks.length) await api(`/itens?id=eq.${g.bulks[0].id}`,{method:"PATCH",body:JSON.stringify({qtde:g.bulks[0].qtde+1})});
+      else await api("/itens",{method:"POST",body:JSON.stringify({material_id:g.material_id,localizacao_id:g.localizacao_id,qtde:1})});
+    }else{
+      const b=g.bulks.find(x=>x.qtde>0);
+      if(!b){ toast("Só há unidades identificadas aqui — remova pelo Editar, escolhendo o patrimônio/série."); return; }
+      if(b.qtde-1>0) await api(`/itens?id=eq.${b.id}`,{method:"PATCH",body:JSON.stringify({qtde:b.qtde-1})});
+      else await api(`/itens?id=eq.${b.id}`,{method:"PATCH",body:JSON.stringify({deleted_at:agora()})});
+    }
+    await loadAll();
+  }catch(e){ fail(e); }
 }
-async function ciclarConferido(id){
-  const it=ITENS.find(i=>i.id===id); if(!it) return;
-  const novo=CONF_NEXT[it.conferido];
-  try{ await api(`/itens?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({conferido:novo})}); it.conferido=novo; renderTable(); }
-  catch(e){ fail(e); }
+async function ciclarConferido(key){
+  const g=grupo(key); if(!g) return;
+  const novo=CONF_NEXT[g.conferido];
+  try{
+    await api(`/itens?id=in.(${g.ids.join(",")})`,{method:"PATCH",body:JSON.stringify({conferido:novo})});
+    await loadAll();
+  }catch(e){ fail(e); }
 }
-async function excluirItem(id){
-  const it=ITENS.find(i=>i.id===id); if(!it) return;
-  if(!confirm(`Excluir "${it.material}" (${it.unidade})?\nO registro fica no banco (exclusão lógica).`)) return;
-  try{ await api(`/itens?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({deleted_at:new Date().toISOString()})}); await loadAll(); toast("Item excluído"); }
-  catch(e){ fail(e); }
+async function excluirGrupo(key){
+  const g=grupo(key); if(!g) return;
+  if(!confirm(`Excluir "${g.material}" de ${g.unidade} · ${g.localizacao}?\n${g.total} unidade(s) física(s) sairão do inventário (exclusão lógica).`)) return;
+  try{
+    await api(`/itens?id=in.(${g.ids.join(",")})`,{method:"PATCH",body:JSON.stringify({deleted_at:agora()})});
+    await loadAll(); toast("Item excluído");
+  }catch(e){ fail(e); }
 }
 
-// ---- Modal novo/editar ----
-let editandoId=null;
+// ---- Helpers ----
 function preencherSelectUnidades(sel,val){
   sel.innerHTML=UNIDADES.map(u=>`<option value="${u.id}" ${u.id===val?"selected":""}>${esc(u.nome)}</option>`).join("");
 }
-function preencherSelectLocais(unidadeId,val){
+function preencherSelectLocaisEm(sel,unidadeId,val){
   const ls=LOCAIS.filter(l=>l.unidade_id===Number(unidadeId));
-  $("#fLocal").innerHTML=ls.length
+  sel.innerHTML=ls.length
     ? ls.map(l=>`<option value="${l.id}" ${l.id===val?"selected":""}>${esc(l.nome)}</option>`).join("")
     : `<option value="">— cadastre uma localização para esta unidade —</option>`;
 }
-$("#fUnidade").addEventListener("change",()=>preencherSelectLocais($("#fUnidade").value,null));
 function resumoMaterial(nome){
   const m=MATERIAIS.find(x=>norm(x.nome)===norm(nome.trim()));
   if(!m) return nome.trim()?`Material novo — será criado no catálogo.`:"";
-  const alocs=ITENS.filter(i=>i.material_id===m.id);
-  if(!alocs.length) return "Material do catálogo, sem estoque alocado.";
-  const total=alocs.reduce((a,d)=>a+d.qtde,0);
-  const dist=alocs.map(a=>`${a.qtde}× ${a.unidade} · ${a.localizacao}`).join("<br>");
-  return `<b>${total} no total</b>, em ${alocs.length} local(is):<br>${dist}`;
+  const gs=GRUPOS.filter(g=>g.material_id===m.id);
+  if(!gs.length) return "Material do catálogo, sem estoque alocado.";
+  const total=gs.reduce((a,g)=>a+g.total,0);
+  return `<b>${total} no total</b>, em ${gs.length} local(is):<br>`+gs.map(g=>`${g.total}× ${esc(g.unidade)} · ${esc(g.localizacao)}`).join("<br>");
 }
-function atualizarResumo(){ $("#fResumo").innerHTML=resumoMaterial($("#fMaterial").value); }
-$("#fMaterial").addEventListener("input",atualizarResumo);
-function abrirModal(item){
-  editandoId=item?item.id:null;
-  $("#modalTitle").textContent=item?"Editar item":"Novo item";
+// validação de unicidade global de patrimônio / nº de série (no cliente; o banco também garante)
+function patrimonioEmUso(v){ return ITENS.find(i=>i.patrimonio&&norm(i.patrimonio)===norm(v)); }
+function serieEmUso(v){ return ITENS.find(i=>i.numero_serie&&norm(i.numero_serie)===norm(v)); }
+
+// ---- Novo item (só pelo catálogo) ----
+function travarQtde(){
+  const identificado=!!($("#fPat").value.trim()||$("#fSerie").value.trim());
+  $("#fQtde").disabled=identificado;
+  if(identificado) $("#fQtde").value=1;
+  $("#fQtdeHint").hidden=!identificado;
+}
+$("#fPat").addEventListener("input",travarQtde);
+$("#fSerie").addEventListener("input",travarQtde);
+$("#fMaterial").addEventListener("input",()=>{ $("#fResumo").innerHTML=resumoMaterial($("#fMaterial").value); });
+$("#novoItem").onclick=()=>{
   $("#dlMateriais").innerHTML=MATERIAIS.map(m=>`<option value="${esc(m.nome)}">`).join("");
-  $("#fMaterial").value=item?item.material:"";
-  $("#fMaterial").disabled=!!item;
-  $("#fQtde").value=item?item.qtde:1;
-  $("#fPat").value=item?.patrimonio||"";
-  $("#grpDestino").style.display=item?"none":"";
-  if(!item){
-    preencherSelectUnidades($("#fUnidade"),UNIDADES[0]?.id);
-    preencherSelectLocais($("#fUnidade").value,null);
-  }
-  atualizarResumo();
-  if(item) $("#fResumo").innerHTML+=`<br><i>Para renomear o material (vale para todas as unidades) ou movê-lo, use Cadastros ou o botão Mover.</i>`;
+  $("#fMaterial").value=""; $("#fPat").value=""; $("#fSerie").value=""; $("#fQtde").value=1;
+  $("#fResumo").innerHTML=""; travarQtde();
+  preencherSelectUnidades($("#fUnidade"),UNIDADES[0]?.id);
+  preencherSelectLocaisEm($("#fLocal"),$("#fUnidade").value,null);
   $("#overlay").classList.add("open");
-  (item?$("#fQtde"):$("#fMaterial")).focus();
-}
+  $("#fMaterial").focus();
+};
+$("#fUnidade").addEventListener("change",()=>preencherSelectLocaisEm($("#fLocal"),$("#fUnidade").value,null));
 function fecharModal(){ $("#overlay").classList.remove("open"); }
-$("#novoItem").onclick=()=>abrirModal(null);
-function editarItem(id){ const it=ITENS.find(i=>i.id===id); if(it) abrirModal(it); }
 $("#cancelar").onclick=fecharModal;
 $("#overlay").addEventListener("click",e=>{ if(e.target===$("#overlay")) fecharModal(); });
 async function resolverMaterialId(nome){
@@ -491,85 +580,156 @@ async function resolverMaterialId(nome){
 }
 $("#itemForm").addEventListener("submit",async e=>{
   e.preventDefault();
+  const nome=$("#fMaterial").value.trim();
+  const pat=$("#fPat").value.trim()||null;
+  const serie=$("#fSerie").value.trim()||null;
+  const localizacao_id=Number($("#fLocal").value);
+  if(!nome||!localizacao_id){ toast("Preencha material e localização"); return; }
+  if(pat){ const em=patrimonioEmUso(pat); if(em){ toast(`Patrimônio ${pat} já cadastrado: ${em.material} em ${em.unidade}`); return; } }
+  if(serie){ const em=serieEmUso(serie); if(em){ toast(`Nº de série ${serie} já cadastrado: ${em.material} em ${em.unidade}`); return; } }
   try{
-    if(editandoId){
-      // Editar corrige apenas dados desta alocação — sem renome, sem movimentação
-      await api(`/itens?id=eq.${editandoId}`,{method:"PATCH",body:JSON.stringify({
-        qtde:Number($("#fQtde").value),
-        patrimonio:$("#fPat").value.trim()||null,
-      })});
-    }else{
-      const nome=$("#fMaterial").value.trim();
-      const localizacao_id=Number($("#fLocal").value);
-      if(!nome||!localizacao_id){ toast("Preencha material e localização"); return; }
-      const material_id=await resolverMaterialId(nome);
-      const jaExiste=ITENS.find(i=>i.material_id===material_id && i.localizacao_id===localizacao_id);
-      if(jaExiste && !confirm(`"${nome}" já tem ${jaExiste.qtde} unidade(s) nessa localização.\nCriar outra alocação mesmo assim? (Para somar, use os botões − / + na tabela.)`)) return;
-      await api("/itens",{method:"POST",body:JSON.stringify({
-        material_id, localizacao_id,
-        qtde:Number($("#fQtde").value),
-        patrimonio:$("#fPat").value.trim()||null,
-      })});
-    }
-    fecharModal(); await loadAll(); toast(editandoId?"Item atualizado":"Item cadastrado");
+    const material_id=await resolverMaterialId(nome);
+    await api("/itens",{method:"POST",body:JSON.stringify({
+      material_id, localizacao_id,
+      qtde:(pat||serie)?1:Number($("#fQtde").value),
+      patrimonio:pat, numero_serie:serie,
+    })});
+    fecharModal(); await loadAll(); toast("Item cadastrado");
   }catch(e2){ fail(e2); }
 });
 
-// ---- Mover (movimentação de estoque, com histórico) ----
-let movendoId=null;
-function moverItem(id){
+// ---- Editar grupo ----
+let editandoKey=null;
+function abrirEditar(key){
+  const g=grupo(key); if(!g) return;
+  editandoKey=key;
+  $("#edInfo").innerHTML=`<b>${esc(g.material)}</b><br>${esc(g.unidade)} · ${esc(g.localizacao)} — total ${g.total}`;
+  $("#edBulk").value=g.bulkQtde;
+  $("#edChips").innerHTML=g.idents.length
+    ? g.idents.map(i=>`<span class="pchip">${esc(i.patrimonio||i.numero_serie)}${i.patrimonio&&i.numero_serie?" / "+esc(i.numero_serie):""}<span class="x" title="Remover esta unidade" onclick="removerIdent(${i.id})">×</span></span>`).join("")
+    : `<span class="hint">Nenhuma.</span>`;
+  $("#edNovoPat").value=""; $("#edNovaSerie").value="";
+  $("#overlayEditar").classList.add("open");
+}
+function fecharEditar(){ $("#overlayEditar").classList.remove("open"); editandoKey=null; }
+$("#edFechar").onclick=fecharEditar;
+$("#overlayEditar").addEventListener("click",e=>{ if(e.target===$("#overlayEditar")) fecharEditar(); });
+$("#editarForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const g=grupo(editandoKey); if(!g) return;
+  const val=Number($("#edBulk").value);
+  if(val<0||!Number.isInteger(val)){ toast("Quantidade inválida"); return; }
+  try{
+    // normaliza: 1ª linha a granel recebe o valor; demais são absorvidas
+    if(g.bulks.length){
+      if(val>0) await api(`/itens?id=eq.${g.bulks[0].id}`,{method:"PATCH",body:JSON.stringify({qtde:val})});
+      else await api(`/itens?id=eq.${g.bulks[0].id}`,{method:"PATCH",body:JSON.stringify({deleted_at:agora()})});
+      for(const b of g.bulks.slice(1)) await api(`/itens?id=eq.${b.id}`,{method:"PATCH",body:JSON.stringify({deleted_at:agora()})});
+    }else if(val>0){
+      await api("/itens",{method:"POST",body:JSON.stringify({material_id:g.material_id,localizacao_id:g.localizacao_id,qtde:val})});
+    }
+    fecharEditar(); await loadAll(); toast("Quantidade atualizada");
+  }catch(e2){ fail(e2); }
+});
+async function removerIdent(id){
   const it=ITENS.find(i=>i.id===id); if(!it) return;
-  movendoId=id;
-  $("#mvInfo").innerHTML=`<b>${esc(it.material)}</b><br>Origem: ${esc(it.unidade)} · ${esc(it.localizacao)} — <b>${it.qtde} disponível(is)</b>`;
-  $("#mvResumo").innerHTML=resumoMaterial(it.material);
-  $("#mvQtde").value=it.qtde; $("#mvQtde").max=it.qtde;
-  preencherSelectUnidades($("#mvUnidade"),it.unidade_id);
-  preencherSelectLocaisEm($("#mvLocal"),it.unidade_id,null);
+  const rot=it.patrimonio||it.numero_serie;
+  if(!confirm(`Remover a unidade ${rot} de ${it.material} (${it.unidade})?`)) return;
+  try{
+    await api(`/itens?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({deleted_at:agora()})});
+    const key=editandoKey;
+    await loadAll();
+    if(key&&grupo(key)) abrirEditar(key); else fecharEditar();
+    toast("Unidade removida");
+  }catch(e){ fail(e); }
+}
+async function adicionarIdent(campo){
+  const g=grupo(editandoKey); if(!g) return;
+  const inp=campo==="patrimonio"?$("#edNovoPat"):$("#edNovaSerie");
+  const v=inp.value.trim(); if(!v) return;
+  const em=campo==="patrimonio"?patrimonioEmUso(v):serieEmUso(v);
+  if(em){ toast(`${campo==="patrimonio"?"Patrimônio":"Nº de série"} ${v} já cadastrado: ${em.material} em ${em.unidade}`); return; }
+  try{
+    await api("/itens",{method:"POST",body:JSON.stringify({
+      material_id:g.material_id, localizacao_id:g.localizacao_id, qtde:1, [campo]:v,
+    })});
+    inp.value="";
+    const key=editandoKey;
+    await loadAll(); abrirEditar(key);
+    toast("Unidade identificada adicionada (+1 física)");
+  }catch(e){ fail(e); }
+}
+$("#edAddPat").onclick=()=>adicionarIdent("patrimonio");
+$("#edAddSerie").onclick=()=>adicionarIdent("numero_serie");
+
+// ---- Mover grupo ----
+let movendoKey=null, mvSelecionados=new Set();
+function abrirMover(key){
+  const g=grupo(key); if(!g) return;
+  movendoKey=key; mvSelecionados=new Set();
+  $("#mvInfo").innerHTML=`<b>${esc(g.material)}</b><br>Origem: ${esc(g.unidade)} · ${esc(g.localizacao)} — total ${g.total}`;
+  $("#mvResumo").innerHTML=resumoMaterial(g.material);
+  $("#mvBulkMax").textContent=g.bulkQtde;
+  $("#mvQtde").value=g.idents.length?0:g.bulkQtde;
+  $("#mvQtde").max=g.bulkQtde;
+  $("#mvChips").innerHTML=g.idents.length
+    ? g.idents.map(i=>`<span class="pchip" style="cursor:pointer" data-id="${i.id}" onclick="alternarSel(this)">${esc(i.patrimonio||i.numero_serie)}</span>`).join("")
+    : `<span class="hint">Nenhuma unidade identificada neste local.</span>`;
+  preencherSelectUnidades($("#mvUnidade"),g.unidade_id);
+  preencherSelectLocaisEm($("#mvLocal"),g.unidade_id,null);
   $("#overlayMover").classList.add("open");
-  $("#mvQtde").focus();
 }
-function preencherSelectLocaisEm(sel,unidadeId,val){
-  const ls=LOCAIS.filter(l=>l.unidade_id===Number(unidadeId));
-  sel.innerHTML=ls.length
-    ? ls.map(l=>`<option value="${l.id}" ${l.id===val?"selected":""}>${esc(l.nome)}</option>`).join("")
-    : `<option value="">— cadastre uma localização para esta unidade —</option>`;
+function alternarSel(el){
+  const id=Number(el.dataset.id);
+  if(mvSelecionados.has(id)){ mvSelecionados.delete(id); el.classList.remove("sel"); }
+  else { mvSelecionados.add(id); el.classList.add("sel"); }
 }
-$("#mvUnidade").addEventListener("change",()=>preencherSelectLocaisEm($("#mvLocal"),$("#mvUnidade").value,null));
-function fecharMover(){ $("#overlayMover").classList.remove("open"); movendoId=null; }
+function fecharMover(){ $("#overlayMover").classList.remove("open"); movendoKey=null; }
 $("#mvCancelar").onclick=fecharMover;
 $("#overlayMover").addEventListener("click",e=>{ if(e.target===$("#overlayMover")) fecharMover(); });
+$("#mvUnidade").addEventListener("change",()=>preencherSelectLocaisEm($("#mvLocal"),$("#mvUnidade").value,null));
 $("#moverForm").addEventListener("submit",async e=>{
   e.preventDefault();
-  const it=ITENS.find(i=>i.id===movendoId); if(!it) return;
-  const n=Number($("#mvQtde").value);
+  const g=grupo(movendoKey); if(!g) return;
+  const nBulk=Number($("#mvQtde").value)||0;
+  const sel=g.idents.filter(i=>mvSelecionados.has(i.id));
   const destino=Number($("#mvLocal").value);
   if(!destino){ toast("Escolha a localização de destino"); return; }
-  if(n<1||n>it.qtde){ toast(`Quantidade deve ser entre 1 e ${it.qtde}`); return; }
-  if(destino===it.localizacao_id){ toast("O destino é igual à origem"); return; }
+  if(destino===g.localizacao_id){ toast("O destino é igual à origem"); return; }
+  if(nBulk<0||nBulk>g.bulkQtde){ toast(`A granel: entre 0 e ${g.bulkQtde}`); return; }
+  if(nBulk+sel.length<1){ toast("Selecione ao menos 1 unidade (a granel ou identificada)"); return; }
   try{
-    const alvo=ITENS.find(i=>i.material_id===it.material_id && i.localizacao_id===destino);
-    if(alvo) await api(`/itens?id=eq.${alvo.id}`,{method:"PATCH",body:JSON.stringify({qtde:alvo.qtde+n})});
-    else await api("/itens",{method:"POST",body:JSON.stringify({
-      material_id:it.material_id, localizacao_id:destino, qtde:n,
-      patrimonio:n===it.qtde?it.patrimonio:null,
-    })});
-    if(it.qtde-n>0) await api(`/itens?id=eq.${it.id}`,{method:"PATCH",body:JSON.stringify({qtde:it.qtde-n})});
-    else await api(`/itens?id=eq.${it.id}`,{method:"PATCH",body:JSON.stringify({deleted_at:new Date().toISOString()})});
+    // identificadas: a linha viaja inteira — o patrimônio/série vai junto
+    for(const i of sel) await api(`/itens?id=eq.${i.id}`,{method:"PATCH",body:JSON.stringify({localizacao_id:destino})});
+    // a granel: subtrai da origem, soma/cria no destino
+    if(nBulk>0){
+      let restante=nBulk;
+      for(const b of g.bulks){
+        if(restante<=0) break;
+        const tira=Math.min(b.qtde,restante); restante-=tira;
+        if(b.qtde-tira>0) await api(`/itens?id=eq.${b.id}`,{method:"PATCH",body:JSON.stringify({qtde:b.qtde-tira})});
+        else await api(`/itens?id=eq.${b.id}`,{method:"PATCH",body:JSON.stringify({deleted_at:agora()})});
+      }
+      const alvo=ITENS.find(i=>i.material_id===g.material_id && i.localizacao_id===destino && !i.patrimonio && !i.numero_serie);
+      if(alvo) await api(`/itens?id=eq.${alvo.id}`,{method:"PATCH",body:JSON.stringify({qtde:alvo.qtde+nBulk})});
+      else await api("/itens",{method:"POST",body:JSON.stringify({material_id:g.material_id,localizacao_id:destino,qtde:nBulk})});
+    }
     await api("/movimentacoes",{method:"POST",body:JSON.stringify({
-      material_id:it.material_id, origem_localizacao_id:it.localizacao_id,
-      destino_localizacao_id:destino, qtde:n,
+      material_id:g.material_id, origem_localizacao_id:g.localizacao_id,
+      destino_localizacao_id:destino, qtde:nBulk+sel.length,
+      patrimonios:sel.length?sel.map(i=>i.patrimonio||i.numero_serie):null,
     })});
     fecharMover(); await loadAll();
-    toast(`${n}× ${it.material} movido(s)`);
+    toast(`${nBulk+sel.length}× ${g.material} movido(s)`);
   }catch(e2){ fail(e2); }
 });
 
-// ---- Cadastros (unidades e localizações) ----
+// ---- Cadastros ----
 function renderCadastros(){
-  const cntPorUnidade={}, cntPorLocal={};
-  ITENS.forEach(i=>{ cntPorUnidade[i.unidade_id]=(cntPorUnidade[i.unidade_id]||0)+1; cntPorLocal[i.localizacao_id]=(cntPorLocal[i.localizacao_id]||0)+1; });
+  const fisPorUnidade={}, fisPorLocal={};
+  ITENS.forEach(i=>{ fisPorUnidade[i.unidade_id]=(fisPorUnidade[i.unidade_id]||0)+i.qtde; fisPorLocal[i.localizacao_id]=(fisPorLocal[i.localizacao_id]||0)+i.qtde; });
   $("#listaUnidades").innerHTML=UNIDADES.map(u=>`<li>
-    <span class="nm">${esc(u.nome)}</span><span class="cnt">${cntPorUnidade[u.id]||0} itens</span>
+    <span class="nm">${esc(u.nome)}</span><span class="cnt">${fisPorUnidade[u.id]||0} fís.</span>
     <button class="btn small" onclick="renomearUnidade(${u.id})">Renomear</button>
     <button class="btn small danger" onclick="excluirUnidade(${u.id})">Excluir</button>
   </li>`).join("");
@@ -579,10 +739,21 @@ function renderCadastros(){
   renderListaLocais();
   renderListaMateriais();
 }
+function renderListaLocais(){
+  const uid=Number($("#cadUnidadeSel").value);
+  const fisPorLocal={};
+  ITENS.forEach(i=>{ fisPorLocal[i.localizacao_id]=(fisPorLocal[i.localizacao_id]||0)+i.qtde; });
+  $("#listaLocais").innerHTML=LOCAIS.filter(l=>l.unidade_id===uid).map(l=>`<li>
+    <span class="nm">${esc(l.nome)}</span><span class="cnt">${fisPorLocal[l.id]||0} fís.</span>
+    <button class="btn small" onclick="renomearLocal(${l.id})">Renomear</button>
+    <button class="btn small danger" onclick="excluirLocal(${l.id})">Excluir</button>
+  </li>`).join("")||`<li><span class="nm" style="color:var(--muted)">Nenhuma localização nesta unidade.</span></li>`;
+}
+$("#cadUnidadeSel").addEventListener("change",renderListaLocais);
 function renderListaMateriais(){
   const q=norm($("#buscaMat").value.trim());
   const stats={};
-  ITENS.forEach(i=>{ const s=stats[i.material_id]||(stats[i.material_id]={total:0,locais:0}); s.total+=i.qtde; s.locais++; });
+  GRUPOS.forEach(g=>{ const s=stats[g.material_id]||(stats[g.material_id]={total:0,locais:0}); s.total+=g.total; s.locais++; });
   const ms=MATERIAIS.filter(m=>!q||norm(m.nome).includes(q));
   $("#listaMateriais").innerHTML=ms.map(m=>{
     const s=stats[m.id];
@@ -592,10 +763,51 @@ function renderListaMateriais(){
   }).join("")||`<li><span class="nm" style="color:var(--muted)">Nenhum material encontrado.</span></li>`;
 }
 $("#buscaMat").addEventListener("input",renderListaMateriais);
+$("#addUnidade").onclick=async()=>{
+  const nome=$("#novaUnidade").value.trim(); if(!nome) return;
+  if(UNIDADES.some(u=>norm(u.nome)===norm(nome))){ toast("Já existe uma unidade com esse nome"); return; }
+  try{ await api("/unidades",{method:"POST",body:JSON.stringify({nome})}); $("#novaUnidade").value=""; await loadAll(); toast("Unidade criada"); }
+  catch(e){ fail(e); }
+};
+$("#addLocal").onclick=async()=>{
+  const nome=$("#novoLocal").value.trim(); const uid=Number($("#cadUnidadeSel").value);
+  if(!nome||!uid) return;
+  if(LOCAIS.some(l=>l.unidade_id===uid&&norm(l.nome)===norm(nome))){ toast("Já existe uma localização com esse nome nesta unidade"); return; }
+  try{ await api("/localizacoes",{method:"POST",body:JSON.stringify({nome,unidade_id:uid})}); $("#novoLocal").value=""; await loadAll(); toast("Localização criada"); }
+  catch(e){ fail(e); }
+};
+async function renomearUnidade(id){
+  const u=UNIDADES.find(x=>x.id===id); if(!u) return;
+  const nome=prompt("Novo nome da unidade:",u.nome); if(!nome||nome.trim()===u.nome) return;
+  if(UNIDADES.some(x=>x.id!==id&&norm(x.nome)===norm(nome))){ toast("Já existe uma unidade com esse nome"); return; }
+  try{ await api(`/unidades?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({nome:nome.trim()})}); await loadAll(); toast("Unidade renomeada"); }
+  catch(e){ fail(e); }
+}
+async function excluirUnidade(id){
+  const u=UNIDADES.find(x=>x.id===id); if(!u) return;
+  const n=ITENS.filter(i=>i.unidade_id===id).reduce((a,i)=>a+i.qtde,0);
+  if(!confirm(`Excluir a unidade "${u.nome}"?${n?`\nAtenção: ${n} unidades físicas ficarão ocultas junto com ela.`:""}\n(Exclusão lógica — o registro fica no banco.)`)) return;
+  try{ await api(`/unidades?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({deleted_at:agora()})}); await loadAll(); toast("Unidade excluída"); }
+  catch(e){ fail(e); }
+}
+async function renomearLocal(id){
+  const l=LOCAIS.find(x=>x.id===id); if(!l) return;
+  const nome=prompt("Novo nome da localização:",l.nome); if(!nome||nome.trim()===l.nome) return;
+  if(LOCAIS.some(x=>x.id!==id&&x.unidade_id===l.unidade_id&&norm(x.nome)===norm(nome))){ toast("Já existe uma localização com esse nome nesta unidade"); return; }
+  try{ await api(`/localizacoes?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({nome:nome.trim()})}); await loadAll(); toast("Localização renomeada"); }
+  catch(e){ fail(e); }
+}
+async function excluirLocal(id){
+  const l=LOCAIS.find(x=>x.id===id); if(!l) return;
+  const n=ITENS.filter(i=>i.localizacao_id===id).reduce((a,i)=>a+i.qtde,0);
+  if(!confirm(`Excluir a localização "${l.nome}"?${n?`\nAtenção: ${n} unidades físicas ficarão ocultas junto com ela.`:""}`)) return;
+  try{ await api(`/localizacoes?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({deleted_at:agora()})}); await loadAll(); toast("Localização excluída"); }
+  catch(e){ fail(e); }
+}
 async function renomearMaterial(id){
   const m=MATERIAIS.find(x=>x.id===id); if(!m) return;
-  const alocs=ITENS.filter(i=>i.material_id===id).length;
-  const nome=prompt(`Novo nome para "${m.nome}"${alocs?` (muda nas ${alocs} alocações, todas as unidades)`:""}:`,m.nome);
+  const alocs=GRUPOS.filter(g=>g.material_id===id).length;
+  const nome=prompt(`Novo nome para "${m.nome}"${alocs?` (muda em ${alocs} local(is), todas as unidades)`:""}:`,m.nome);
   if(!nome||nome.trim()===m.nome) return;
   if(MATERIAIS.some(x=>x.id!==id&&norm(x.nome)===norm(nome))){ toast("Já existe um material com esse nome"); return; }
   try{ await api(`/materiais?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({nome:nome.trim()})}); await loadAll(); toast("Material renomeado"); }
@@ -603,58 +815,10 @@ async function renomearMaterial(id){
 }
 async function excluirMaterial(id){
   const m=MATERIAIS.find(x=>x.id===id); if(!m) return;
-  const alocs=ITENS.filter(i=>i.material_id===id);
-  if(alocs.length){ toast(`"${m.nome}" tem estoque em ${alocs.length} local(is) — exclua ou mova as alocações antes.`); return; }
+  const gs=GRUPOS.filter(g=>g.material_id===id);
+  if(gs.length){ toast(`"${m.nome}" tem estoque em ${gs.length} local(is) — exclua ou mova antes.`); return; }
   if(!confirm(`Excluir "${m.nome}" do catálogo? (Exclusão lógica.)`)) return;
-  try{ await api(`/materiais?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({deleted_at:new Date().toISOString()})}); await loadAll(); toast("Material excluído"); }
-  catch(e){ fail(e); }
-}
-function renderListaLocais(){
-  const uid=Number($("#cadUnidadeSel").value);
-  const cntPorLocal={};
-  ITENS.forEach(i=>{ cntPorLocal[i.localizacao_id]=(cntPorLocal[i.localizacao_id]||0)+1; });
-  $("#listaLocais").innerHTML=LOCAIS.filter(l=>l.unidade_id===uid).map(l=>`<li>
-    <span class="nm">${esc(l.nome)}</span><span class="cnt">${cntPorLocal[l.id]||0} itens</span>
-    <button class="btn small" onclick="renomearLocal(${l.id})">Renomear</button>
-    <button class="btn small danger" onclick="excluirLocal(${l.id})">Excluir</button>
-  </li>`).join("")||`<li><span class="nm" style="color:var(--muted)">Nenhuma localização nesta unidade.</span></li>`;
-}
-$("#cadUnidadeSel").addEventListener("change",renderListaLocais);
-$("#addUnidade").onclick=async()=>{
-  const nome=$("#novaUnidade").value.trim(); if(!nome) return;
-  try{ await api("/unidades",{method:"POST",body:JSON.stringify({nome})}); $("#novaUnidade").value=""; await loadAll(); toast("Unidade criada"); }
-  catch(e){ fail(e); }
-};
-$("#addLocal").onclick=async()=>{
-  const nome=$("#novoLocal").value.trim(); const uid=Number($("#cadUnidadeSel").value);
-  if(!nome||!uid) return;
-  try{ await api("/localizacoes",{method:"POST",body:JSON.stringify({nome,unidade_id:uid})}); $("#novoLocal").value=""; await loadAll(); toast("Localização criada"); }
-  catch(e){ fail(e); }
-};
-async function renomearUnidade(id){
-  const u=UNIDADES.find(x=>x.id===id); if(!u) return;
-  const nome=prompt("Novo nome da unidade:",u.nome); if(!nome||nome.trim()===u.nome) return;
-  try{ await api(`/unidades?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({nome:nome.trim()})}); await loadAll(); toast("Unidade renomeada"); }
-  catch(e){ fail(e); }
-}
-async function excluirUnidade(id){
-  const u=UNIDADES.find(x=>x.id===id); if(!u) return;
-  const n=ITENS.filter(i=>i.unidade_id===id).length;
-  if(!confirm(`Excluir a unidade "${u.nome}"?${n?`\nAtenção: ${n} itens ficarão ocultos junto com ela.`:""}\n(Exclusão lógica — o registro fica no banco.)`)) return;
-  try{ await api(`/unidades?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({deleted_at:new Date().toISOString()})}); await loadAll(); toast("Unidade excluída"); }
-  catch(e){ fail(e); }
-}
-async function renomearLocal(id){
-  const l=LOCAIS.find(x=>x.id===id); if(!l) return;
-  const nome=prompt("Novo nome da localização:",l.nome); if(!nome||nome.trim()===l.nome) return;
-  try{ await api(`/localizacoes?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({nome:nome.trim()})}); await loadAll(); toast("Localização renomeada"); }
-  catch(e){ fail(e); }
-}
-async function excluirLocal(id){
-  const l=LOCAIS.find(x=>x.id===id); if(!l) return;
-  const n=ITENS.filter(i=>i.localizacao_id===id).length;
-  if(!confirm(`Excluir a localização "${l.nome}"?${n?`\nAtenção: ${n} itens ficarão ocultos junto com ela.`:""}`)) return;
-  try{ await api(`/localizacoes?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({deleted_at:new Date().toISOString()})}); await loadAll(); toast("Localização excluída"); }
+  try{ await api(`/materiais?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({deleted_at:agora()})}); await loadAll(); toast("Material excluído"); }
   catch(e){ fail(e); }
 }
 
