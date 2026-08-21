@@ -97,7 +97,7 @@ td.acts{width:1%;white-space:nowrap;text-align:right}
 .iconbtn:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 th.w-q{width:92px} th.w-pat{width:150px} th.w-ser{width:130px} th.w-loc{width:160px} th.w-un{width:130px} th.w-chk{width:84px} th.w-act{width:150px}
 .mcount{color:var(--ok);font-weight:700;font-variant-numeric:tabular-nums;text-align:right;min-width:40px;flex:none}
-.ltwrap{flex:1 1 auto;min-height:120px;overflow-y:auto;margin-top:10px;border:1px solid var(--line);border-radius:8px}
+.ltwrap{flex:1 1 auto;min-height:0;overflow-y:auto;margin-top:10px;border:1px solid var(--line);border-radius:8px}
 .ltwrap td input.inv{border-color:var(--falta);outline:1px solid var(--falta)}
 #ltErro{color:var(--falta);font-size:12.5px;margin-top:8px}
 .ltwrap table{border:0}
@@ -109,8 +109,8 @@ footer{margin-top:28px;color:var(--muted);font-size:12.5px}
 /* modal */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;padding:5vh 16px;z-index:100;overflow-y:auto}
 .overlay.open{display:flex}
-.modal{background:var(--surface);border:1px solid var(--line);border-radius:10px;width:100%;max-width:480px;padding:20px;max-height:90vh;display:flex;flex-direction:column}
-.modal>*{flex:none}
+.modal{background:var(--surface);border:1px solid var(--line);border-radius:10px;width:100%;max-width:480px;padding:20px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
+.modal>:not(.ltwrap){flex:none}
 .modal h2{font:700 18px Archivo,sans-serif;margin:0 0 14px}
 .modal label{display:block;font:600 11.5px "Public Sans",sans-serif;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:12px 0 4px}
 .modal input,.modal select{width:100%;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:9px 12px;font:inherit}
