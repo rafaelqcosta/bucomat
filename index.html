@@ -81,7 +81,7 @@ td.q{width:1%;white-space:nowrap}
 .qbox b{font:500 14px "IBM Plex Mono",monospace;min-width:26px;text-align:center}
 .qbox button{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:4px;width:22px;height:22px;line-height:1;cursor:pointer;font-weight:700}
 .badge{display:inline-block;font:600 11px "Public Sans",sans-serif;letter-spacing:.05em;background:var(--chip-bg);color:var(--naval);border-radius:4px;padding:2px 8px;white-space:nowrap}
-.pchip{display:inline-block;font:500 12px "IBM Plex Mono",monospace;background:var(--chip-bg);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:1px 8px;margin:1px 3px 1px 0;white-space:nowrap}
+.pchip{display:inline-block;font:500 12px "IBM Plex Mono",monospace;background:var(--chip-bg);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:1px 8px;margin:1px 3px 1px 0;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;vertical-align:bottom}
 .pchip.sel{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .pchip .x{margin-left:6px;color:var(--muted);cursor:pointer;font-weight:700}
 .pchip .x:hover{color:var(--accent)}
@@ -455,7 +455,7 @@ const CONF_ICON={conferido:"✓", falta:"✗", nao_conferido:"—"};
 const CONF_TITLE={conferido:"Conferido", falta:"Falta", nao_conferido:"Não conferido"};
 function filteredGroups(){ return GRUPOS.filter(g=>grupoPassa(g,null)); }
 function filtrosAtivos(){ return FILTERS.filter(f=>state[f.key]).map(f=>`${f.tag}: ${state[f.key]}`).join(" · "); }
-const chips=vs=>vs.length?vs.map(v=>`<span class="pchip">${esc(v)}</span>`).join(""):"—";
+const chips=vs=>vs.length?vs.map(v=>`<span class="pchip" title="${esc(v)}">${esc(v)}</span>`).join(""):"—";
 function renderTable(){
   const gs=filteredGroups();
   $("#reset").hidden=!FILTERS.some(f=>state[f.key]);
@@ -622,7 +622,7 @@ function abrirEditar(key){
   $("#edInfo").innerHTML=`<b>${esc(g.material)}</b><br>${esc(g.unidade)} · ${esc(g.localizacao)} — total ${g.total}`;
   $("#edBulk").value=g.bulkQtde;
   $("#edChips").innerHTML=g.idents.length
-    ? g.idents.map(i=>`<span class="pchip">${esc(i.patrimonio||i.numero_serie)}${i.patrimonio&&i.numero_serie?" / "+esc(i.numero_serie):""}<span class="x" title="Remover esta unidade" onclick="removerIdent(${i.id})">×</span></span>`).join("")
+    ? g.idents.map(i=>`<span class="pchip" title="${esc(i.patrimonio||"")}${i.patrimonio&&i.numero_serie?" / ":""}${esc(i.numero_serie||"")}">${esc(i.patrimonio||i.numero_serie)}${i.patrimonio&&i.numero_serie?" / "+esc(i.numero_serie):""}<span class="x" title="Remover esta unidade" onclick="removerIdent(${i.id})">×</span></span>`).join("")
     : `<span class="hint">Nenhuma.</span>`;
   $("#edNovoPat").value=""; $("#edNovaSerie").value="";
   $("#overlayEditar").classList.add("open");
@@ -769,7 +769,7 @@ function abrirMover(key){
   $("#mvQtde").value=g.idents.length?0:g.bulkQtde;
   $("#mvQtde").max=g.bulkQtde;
   $("#mvChipsWrap").hidden=!g.idents.length;
-  $("#mvChips").innerHTML=g.idents.map(i=>`<span class="pchip" style="cursor:pointer" data-id="${i.id}" onclick="alternarSel(this)">${esc(i.patrimonio||i.numero_serie)}</span>`).join("");
+  $("#mvChips").innerHTML=g.idents.map(i=>`<span class="pchip" style="cursor:pointer" data-id="${i.id}" title="${esc(i.patrimonio||i.numero_serie)}" onclick="alternarSel(this)">${esc(i.patrimonio||i.numero_serie)}</span>`).join("");
   preencherSelectUnidades($("#mvUnidade"),g.unidade_id);
   preencherSelectLocaisEm($("#mvLocal"),g.unidade_id,null);
   $("#overlayMover").classList.add("open");
