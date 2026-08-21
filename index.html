@@ -135,6 +135,12 @@ footer{margin-top:28px;color:var(--muted);font-size:12.5px}
 .cadfull{margin-top:20px}
 .addrow{display:flex;gap:8px}
 .addrow input,.addrow select{flex:1;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font:inherit}
+/* loading global: botão clicado vira spinner, demais ações bloqueadas */
+.loading{position:relative;color:transparent !important;pointer-events:none}
+.loading::after{content:"";position:absolute;inset:0;margin:auto;width:13px;height:13px;border:2px solid var(--muted);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){.loading::after{animation-duration:1.6s}}
+body.busy button:not(.loading){pointer-events:none;opacity:.55}
 #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:8px;font-size:13.5px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:200}
 #toast.show{opacity:.95}
 @media (max-width:640px){
@@ -342,6 +348,19 @@ function toast(msg){
 function fail(e){ console.error(e); toast("Erro: "+e.message); }
 const agora=()=>new Date().toISOString();
 
+// trava global de ações: 1 operação por vez, spinner no botão, destrava sozinha em 15s
+let OCUPADO=false;
+function liberar(el){ OCUPADO=false; document.body.classList.remove("busy"); el?.classList?.remove("loading"); }
+async function guard(el,fn){
+  if(OCUPADO) return;
+  OCUPADO=true;
+  document.body.classList.add("busy");
+  el?.classList?.add("loading");
+  const timer=setTimeout(()=>liberar(el),15000);
+  try{ await fn(); } finally{ clearTimeout(timer); liberar(el); }
+}
+function botaoSubmit(form){ return form.querySelector('button[type="submit"]'); }
+
 let UNIDADES=[], LOCAIS=[], ITENS=[], MATERIAIS=[], GRUPOS=[];
 async function loadAll(){
   [UNIDADES,LOCAIS,ITENS,MATERIAIS]=await Promise.all([
@@ -471,19 +490,19 @@ function renderTable(){
   $("#count").textContent=gs.length+" de "+GRUPOS.length+" itens · "+gs.reduce((a,g)=>a+g.total,0)+" unid. físicas";
   $("#tb").innerHTML=gs.length?gs.map(g=>`<tr>
     <td class="q" data-label="Qtde"><span class="qbox">
-      <button type="button" title="Remover 1 (a granel)" onclick="mudarQtde('${g.key}',-1)">−</button><b>${g.total}</b><button type="button" title="Adicionar 1 (a granel)" onclick="mudarQtde('${g.key}',1)">+</button>
+      <button type="button" title="Remover 1 (a granel)" onclick="mudarQtde('${g.key}',-1,this)">−</button><b>${g.total}</b><button type="button" title="Adicionar 1 (a granel)" onclick="mudarQtde('${g.key}',1,this)">+</button>
     </span></td>
     <td class="m" data-label="Material">${esc(g.material)}</td>
     <td data-label="Patrimônio">${chips(g.idents.map(i=>i.patrimonio).filter(Boolean))}</td>
     <td data-label="Nº de Série">${chips(g.idents.map(i=>i.numero_serie).filter(Boolean))}</td>
     <td data-label="Localização">${esc(g.localizacao)}</td>
     <td data-label="Unidade/Viatura"><span class="badge">${esc(g.unidade)}</span></td>
-    <td data-label="Conferido" style="text-align:center"><button type="button" class="chkbtn ${g.conferido}" title="${CONF_TITLE[g.conferido]} — clique para alternar (todo o grupo)" onclick="ciclarConferido('${g.key}')">${CONF_ICON[g.conferido]}</button></td>
+    <td data-label="Conferido" style="text-align:center"><button type="button" class="chkbtn ${g.conferido}" title="${CONF_TITLE[g.conferido]} — clique para alternar (todo o grupo)" onclick="ciclarConferido('${g.key}',this)">${CONF_ICON[g.conferido]}</button></td>
     <td class="acts">
       <button class="iconbtn" title="Registrar patrimônios / nº de série" onclick="abrirLote('${g.key}')">🏷</button>
       <button class="iconbtn" title="Mover para outra unidade/localização" onclick="abrirMover('${g.key}')">⇄</button>
       <button class="iconbtn" title="Editar quantidade" onclick="abrirEditar('${g.key}')">✎</button>
-      <button class="iconbtn danger" title="Excluir item" onclick="excluirGrupo('${g.key}')">🗑</button>
+      <button class="iconbtn danger" title="Excluir item" onclick="excluirGrupo('${g.key}',this)">🗑</button>
     </td>
   </tr>`).join(""):`<tr><td colspan="8" class="empty">Nenhum material encontrado. Limpe os filtros para ver tudo.</td></tr>`;
 }
@@ -536,8 +555,9 @@ ${gs.map(g=>`<tr><td class="q">${g.total}</td><td>${esc(g.material)}</td><td>${e
 };
 
 // ---- Mutações rápidas na tabela ----
-async function mudarQtde(key,delta){
+async function mudarQtde(key,delta,el){
   const g=grupo(key); if(!g) return;
+  await guard(el,async()=>{
   try{
     if(delta>0){
       if(g.bulks.length) await api(`/itens?id=eq.${g.bulks[0].id}`,{method:"PATCH",body:JSON.stringify({qtde:g.bulks[0].qtde+1})});
@@ -550,22 +570,27 @@ async function mudarQtde(key,delta){
     }
     await loadAll();
   }catch(e){ fail(e); }
+  });
 }
-async function ciclarConferido(key){
+async function ciclarConferido(key,el){
   const g=grupo(key); if(!g) return;
   const novo=CONF_NEXT[g.conferido];
+  await guard(el,async()=>{
   try{
     await api(`/itens?id=in.(${g.ids.join(",")})`,{method:"PATCH",body:JSON.stringify({conferido:novo})});
     await loadAll();
   }catch(e){ fail(e); }
+  });
 }
-async function excluirGrupo(key){
+async function excluirGrupo(key,el){
   const g=grupo(key); if(!g) return;
   if(!confirm(`Excluir "${g.material}" de ${g.unidade} · ${g.localizacao}?\n${g.total} unidade(s) física(s) sairão do inventário (exclusão lógica).`)) return;
+  await guard(el,async()=>{
   try{
     await api(`/itens?id=in.(${g.ids.join(",")})`,{method:"PATCH",body:JSON.stringify({deleted_at:agora()})});
     await loadAll(); toast("Item excluído");
   }catch(e){ fail(e); }
+  });
 }
 
 // ---- Helpers ----
@@ -614,6 +639,7 @@ $("#itemForm").addEventListener("submit",async e=>{
   const qtde=Number($("#fQtde").value);
   if(!nome||!localizacao_id){ toast("Preencha material e localização"); return; }
   if(qtde<1||!Number.isInteger(qtde)){ toast("Quantidade inválida"); return; }
+  await guard(botaoSubmit(e.target),async()=>{
   try{
     const material_id=await resolverMaterialId(nome);
     const alvo=ITENS.find(i=>i.material_id===material_id && i.localizacao_id===localizacao_id && !i.patrimonio && !i.numero_serie);
@@ -621,6 +647,7 @@ $("#itemForm").addEventListener("submit",async e=>{
     else await api("/itens",{method:"POST",body:JSON.stringify({material_id,localizacao_id,qtde})});
     fecharModal(); await loadAll(); toast("Item cadastrado — use 🏷 na linha para registrar patrimônios");
   }catch(e2){ fail(e2); }
+  });
 });
 
 // ---- Editar grupo ----
@@ -631,7 +658,7 @@ function abrirEditar(key){
   $("#edInfo").innerHTML=`<b>${esc(g.material)}</b><br>${esc(g.unidade)} · ${esc(g.localizacao)} — total ${g.total}`;
   $("#edBulk").value=g.bulkQtde;
   $("#edChips").innerHTML=g.idents.length
-    ? g.idents.map(i=>`<span class="pchip" title="${esc(i.patrimonio||"")}${i.patrimonio&&i.numero_serie?" / ":""}${esc(i.numero_serie||"")}">${esc(i.patrimonio||i.numero_serie)}${i.patrimonio&&i.numero_serie?" / "+esc(i.numero_serie):""}<span class="x" title="Remover esta unidade" onclick="removerIdent(${i.id})">×</span></span>`).join("")
+    ? g.idents.map(i=>`<span class="pchip" title="${esc(i.patrimonio||"")}${i.patrimonio&&i.numero_serie?" / ":""}${esc(i.numero_serie||"")}">${esc(i.patrimonio||i.numero_serie)}${i.patrimonio&&i.numero_serie?" / "+esc(i.numero_serie):""}<span class="x" title="Remover esta unidade" onclick="removerIdent(${i.id},this)">×</span></span>`).join("")
     : `<span class="hint">Nenhuma.</span>`;
   $("#edNovoPat").value=""; $("#edNovaSerie").value="";
   $("#overlayEditar").classList.add("open");
@@ -644,6 +671,7 @@ $("#editarForm").addEventListener("submit",async e=>{
   const g=grupo(editandoKey); if(!g) return;
   const val=Number($("#edBulk").value);
   if(val<0||!Number.isInteger(val)){ toast("Quantidade inválida"); return; }
+  await guard(botaoSubmit(e.target),async()=>{
   try{
     // normaliza: 1ª linha a granel recebe o valor; demais são absorvidas
     if(g.bulks.length){
@@ -655,11 +683,13 @@ $("#editarForm").addEventListener("submit",async e=>{
     }
     fecharEditar(); await loadAll(); toast("Quantidade atualizada");
   }catch(e2){ fail(e2); }
+  });
 });
-async function removerIdent(id){
+async function removerIdent(id,el){
   const it=ITENS.find(i=>i.id===id); if(!it) return;
   const rot=it.patrimonio||it.numero_serie;
   if(!confirm(`Remover a unidade ${rot} de ${it.material} (${it.unidade})?`)) return;
+  await guard(el,async()=>{
   try{
     await api(`/itens?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({deleted_at:agora()})});
     const key=editandoKey;
@@ -667,6 +697,7 @@ async function removerIdent(id){
     if(key&&grupo(key)) abrirEditar(key); else fecharEditar();
     toast("Unidade removida");
   }catch(e){ fail(e); }
+  });
 }
 // ---- Registrar patrimônios em lote ----
 let loteKey=null;
@@ -742,6 +773,7 @@ $("#loteForm").addEventListener("submit",async e=>{
     }
   }
   if(!editadas.length&&!removidas.length&&!novas.length){ fecharLote(); return; }
+  await guard(botaoSubmit(e.target),async()=>{
   try{
     for(const ed of editadas)
       await api(`/itens?id=eq.${ed.id}`,{method:"PATCH",body:JSON.stringify({patrimonio:ed.pat,numero_serie:ed.serie})});
@@ -765,6 +797,7 @@ $("#loteForm").addEventListener("submit",async e=>{
     }
     fecharLote(); await loadAll(); toast("Patrimônios registrados");
   }catch(e2){ fail(e2); }
+  });
 });
 
 // ---- Mover grupo ----
@@ -809,6 +842,7 @@ $("#moverForm").addEventListener("submit",async e=>{
   if(destino===g.localizacao_id){ toast("O destino é igual à origem"); return; }
   if(nBulk<0||nBulk>g.bulkQtde){ toast(`A granel: entre 0 e ${g.bulkQtde}`); return; }
   if(nBulk+sel.length<1){ toast("Selecione ao menos 1 unidade (a granel ou identificada)"); return; }
+  await guard(botaoSubmit(e.target),async()=>{
   try{
     // identificadas: a linha viaja inteira — o patrimônio/série vai junto
     for(const i of sel) await api(`/itens?id=eq.${i.id}`,{method:"PATCH",body:JSON.stringify({localizacao_id:destino})});
@@ -833,6 +867,7 @@ $("#moverForm").addEventListener("submit",async e=>{
     fecharMover(); await loadAll();
     toast(`${nBulk+sel.length}× ${g.material} movido(s)`);
   }catch(e2){ fail(e2); }
+  });
 });
 
 // ---- Cadastros ----
@@ -841,8 +876,8 @@ function renderCadastros(){
   ITENS.forEach(i=>{ fisPorUnidade[i.unidade_id]=(fisPorUnidade[i.unidade_id]||0)+i.qtde; fisPorLocal[i.localizacao_id]=(fisPorLocal[i.localizacao_id]||0)+i.qtde; });
   $("#listaUnidades").innerHTML=UNIDADES.map(u=>`<li>
     <span class="nm">${esc(u.nome)}</span><span class="cnt" title="Unidades físicas nesta viatura">${fisPorUnidade[u.id]||0} unid. físicas</span>
-    <button class="btn small" onclick="renomearUnidade(${u.id})">Renomear</button>
-    <button class="btn small danger" onclick="excluirUnidade(${u.id})">Excluir</button>
+    <button class="btn small" onclick="renomearUnidade(${u.id},this)">Renomear</button>
+    <button class="btn small danger" onclick="excluirUnidade(${u.id},this)">Excluir</button>
   </li>`).join("");
   const sel=$("#cadUnidadeSel");
   const cur=Number(sel.value)||UNIDADES[0]?.id;
@@ -856,8 +891,8 @@ function renderListaLocais(){
   ITENS.forEach(i=>{ fisPorLocal[i.localizacao_id]=(fisPorLocal[i.localizacao_id]||0)+i.qtde; });
   $("#listaLocais").innerHTML=LOCAIS.filter(l=>l.unidade_id===uid).map(l=>`<li>
     <span class="nm">${esc(l.nome)}</span><span class="cnt" title="Unidades físicas nesta localização">${fisPorLocal[l.id]||0} unid. físicas</span>
-    <button class="btn small" onclick="renomearLocal(${l.id})">Renomear</button>
-    <button class="btn small danger" onclick="excluirLocal(${l.id})">Excluir</button>
+    <button class="btn small" onclick="renomearLocal(${l.id},this)">Renomear</button>
+    <button class="btn small danger" onclick="excluirLocal(${l.id},this)">Excluir</button>
   </li>`).join("")||`<li><span class="nm" style="color:var(--muted)">Nenhuma localização nesta unidade.</span></li>`;
 }
 $("#cadUnidadeSel").addEventListener("change",renderListaLocais);
@@ -869,68 +904,76 @@ function renderListaMateriais(){
   $("#listaMateriais").innerHTML=ms.map(m=>{
     const s=stats[m.id];
     return `<li><span class="mcount" title="Total de unidades físicas">${s?s.total:0}</span><span class="nm">${esc(m.nome)}</span>
-      <button class="btn small" onclick="renomearMaterial(${m.id})">Renomear</button>
-      <button class="btn small danger" onclick="excluirMaterial(${m.id})">Excluir</button></li>`;
+      <button class="btn small" onclick="renomearMaterial(${m.id},this)">Renomear</button>
+      <button class="btn small danger" onclick="excluirMaterial(${m.id},this)">Excluir</button></li>`;
   }).join("")||`<li><span class="nm" style="color:var(--muted)">Nenhum material encontrado.</span></li>`;
 }
 $("#buscaMat").addEventListener("input",renderListaMateriais);
 $("#addUnidade").onclick=async()=>{
   const nome=$("#novaUnidade").value.trim(); if(!nome) return;
   if(UNIDADES.some(u=>norm(u.nome)===norm(nome))){ toast("Já existe uma unidade com esse nome"); return; }
+  await guard($("#addUnidade"),async()=>{
   try{ await api("/unidades",{method:"POST",body:JSON.stringify({nome})}); $("#novaUnidade").value=""; await loadAll(); toast("Unidade criada"); }
-  catch(e){ fail(e); }
+  catch(e){ fail(e); } });
 };
 $("#addLocal").onclick=async()=>{
   const nome=$("#novoLocal").value.trim(); const uid=Number($("#cadUnidadeSel").value);
   if(!nome||!uid) return;
   if(LOCAIS.some(l=>l.unidade_id===uid&&norm(l.nome)===norm(nome))){ toast("Já existe uma localização com esse nome nesta unidade"); return; }
+  await guard($("#addLocal"),async()=>{
   try{ await api("/localizacoes",{method:"POST",body:JSON.stringify({nome,unidade_id:uid})}); $("#novoLocal").value=""; await loadAll(); toast("Localização criada"); }
-  catch(e){ fail(e); }
+  catch(e){ fail(e); } });
 };
-async function renomearUnidade(id){
+async function renomearUnidade(id,el){
   const u=UNIDADES.find(x=>x.id===id); if(!u) return;
   const nome=prompt("Novo nome da unidade:",u.nome); if(!nome||nome.trim()===u.nome) return;
   if(UNIDADES.some(x=>x.id!==id&&norm(x.nome)===norm(nome))){ toast("Já existe uma unidade com esse nome"); return; }
+  await guard(el,async()=>{
   try{ await api(`/unidades?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({nome:nome.trim()})}); await loadAll(); toast("Unidade renomeada"); }
-  catch(e){ fail(e); }
+  catch(e){ fail(e); } });
 }
-async function excluirUnidade(id){
+async function excluirUnidade(id,el){
   const u=UNIDADES.find(x=>x.id===id); if(!u) return;
   const n=ITENS.filter(i=>i.unidade_id===id).reduce((a,i)=>a+i.qtde,0);
   if(!confirm(`Excluir a unidade "${u.nome}"?${n?`\nAtenção: ${n} unidades físicas ficarão ocultas junto com ela.`:""}\n(Exclusão lógica — o registro fica no banco.)`)) return;
+  await guard(el,async()=>{
   try{ await api(`/unidades?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({deleted_at:agora()})}); await loadAll(); toast("Unidade excluída"); }
-  catch(e){ fail(e); }
+  catch(e){ fail(e); } });
 }
-async function renomearLocal(id){
+async function renomearLocal(id,el){
   const l=LOCAIS.find(x=>x.id===id); if(!l) return;
   const nome=prompt("Novo nome da localização:",l.nome); if(!nome||nome.trim()===l.nome) return;
   if(LOCAIS.some(x=>x.id!==id&&x.unidade_id===l.unidade_id&&norm(x.nome)===norm(nome))){ toast("Já existe uma localização com esse nome nesta unidade"); return; }
+  await guard(el,async()=>{
   try{ await api(`/localizacoes?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({nome:nome.trim()})}); await loadAll(); toast("Localização renomeada"); }
-  catch(e){ fail(e); }
+  catch(e){ fail(e); } });
 }
-async function excluirLocal(id){
+async function excluirLocal(id,el){
   const l=LOCAIS.find(x=>x.id===id); if(!l) return;
   const n=ITENS.filter(i=>i.localizacao_id===id).reduce((a,i)=>a+i.qtde,0);
   if(!confirm(`Excluir a localização "${l.nome}"?${n?`\nAtenção: ${n} unidades físicas ficarão ocultas junto com ela.`:""}`)) return;
+  await guard(el,async()=>{
   try{ await api(`/localizacoes?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({deleted_at:agora()})}); await loadAll(); toast("Localização excluída"); }
-  catch(e){ fail(e); }
+  catch(e){ fail(e); } });
 }
-async function renomearMaterial(id){
+async function renomearMaterial(id,el){
   const m=MATERIAIS.find(x=>x.id===id); if(!m) return;
   const alocs=GRUPOS.filter(g=>g.material_id===id).length;
   const nome=prompt(`Novo nome para "${m.nome}"${alocs?` (muda em ${alocs} local(is), todas as unidades)`:""}:`,m.nome);
   if(!nome||nome.trim()===m.nome) return;
   if(MATERIAIS.some(x=>x.id!==id&&norm(x.nome)===norm(nome))){ toast("Já existe um material com esse nome"); return; }
+  await guard(el,async()=>{
   try{ await api(`/materiais?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({nome:nome.trim()})}); await loadAll(); toast("Material renomeado"); }
-  catch(e){ fail(e); }
+  catch(e){ fail(e); } });
 }
-async function excluirMaterial(id){
+async function excluirMaterial(id,el){
   const m=MATERIAIS.find(x=>x.id===id); if(!m) return;
   const gs=GRUPOS.filter(g=>g.material_id===id);
   if(gs.length){ toast(`"${m.nome}" tem estoque em ${gs.length} local(is) — exclua ou mova antes.`); return; }
   if(!confirm(`Excluir "${m.nome}" do catálogo? (Exclusão lógica.)`)) return;
+  await guard(el,async()=>{
   try{ await api(`/materiais?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({deleted_at:agora()})}); await loadAll(); toast("Material excluído"); }
-  catch(e){ fail(e); }
+  catch(e){ fail(e); } });
 }
 
 // ---- Abas ----
