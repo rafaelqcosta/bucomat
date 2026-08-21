@@ -3,7 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Inventário SISCOMAT</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="logo.png">
+<title>BUComat</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -19,6 +21,7 @@
     --line:#2C383D; --accent:#D9564B; --accent-ink:#FFFFFF;
     --naval:#7FB0C9; --chip-bg:#242F34;
     --ok:#5FBF8A; --ok-bg:#1E3328; --falta:#E06A60; --falta-bg:#3C2321;
+    --metal:#C3C9CE;
   }
 }
 :root[data-theme="dark"]{
@@ -26,6 +29,7 @@
   --line:#2C383D; --accent:#D9564B; --accent-ink:#FFFFFF;
   --naval:#7FB0C9; --chip-bg:#242F34;
   --ok:#5FBF8A; --ok-bg:#1E3328; --falta:#E06A60; --falta-bg:#3C2321;
+  --metal:#C3C9CE;
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 "Public Sans",system-ui,sans-serif}
@@ -33,6 +37,12 @@ body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 "Public Sans"
 header{display:flex;flex-wrap:wrap;align-items:end;gap:16px 28px;border-bottom:3px solid var(--accent);padding-bottom:18px;margin-bottom:20px}
 h1{font:800 clamp(24px,4vw,34px)/1.1 Archivo,sans-serif;margin:0;text-wrap:balance}
 h1 small{display:block;font:600 12px/1.4 "Public Sans",sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+.brand{display:flex;align-items:center;gap:14px}
+.brand-logo{width:64px;height:64px;object-fit:contain;border-radius:12px}
+.brand-buc{color:var(--accent);font-style:italic;letter-spacing:.01em}
+.brand-omat{color:var(--metal);font-style:italic;letter-spacing:.01em}
+.brand-sub{display:block;font:600 11px/1.4 "Public Sans",sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+:root{--metal:#7A838A}
 .stats{display:flex;gap:24px;margin-left:auto}
 .stat{text-align:right}
 .stat b{display:block;font:700 24px/1 Archivo,sans-serif;font-variant-numeric:tabular-nums}
@@ -159,6 +169,7 @@ body.busy button:not(.loading){pointer-events:none;opacity:.55}
   .wrap{padding:18px 14px 48px}
   .stats{margin-left:0;gap:16px}
   .stat b{font-size:19px}
+  .brand-logo{width:48px;height:48px}
   .filters{position:static}
   .combo{min-width:100%}
   .cadgrid{grid-template-columns:1fr}
@@ -178,7 +189,11 @@ body.busy button:not(.loading){pointer-events:none;opacity:.55}
 <body>
 <div class="wrap">
 <header>
-  <h1><small>SISCOMAT · Controle de Materiais</small>Inventário SISCOMAT</h1>
+  <div class="brand">
+    <img src="logo.png" alt="Logo BUComat — Mergulhadores de Resgate CBMDF" class="brand-logo">
+    <h1><small>Sistema de Controle de Materiais</small><span class="brand-buc">BUC</span><span class="brand-omat">omat</span>
+      <span class="brand-sub">Mergulhadores de Resgate — CBMDF</span></h1>
+  </div>
   <div class="stats">
     <div class="stat"><b id="stMateriais">–</b><span>materiais</span></div>
     <div class="stat"><b id="stQtde">–</b><span>unid. físicas</span></div>
@@ -269,7 +284,7 @@ body.busy button:not(.loading){pointer-events:none;opacity:.55}
   <div style="margin-top:12px"><button class="btn" id="audMais" hidden>Carregar registros mais antigos</button></div>
 </section>
 
-<footer>Dados ao vivo do banco Supabase (projeto siscomat). Alterações feitas aqui valem para todos que abrirem a página.</footer>
+<footer>Dados ao vivo do banco Supabase (projeto BUComat). Alterações feitas aqui valem para todos que abrirem a página.</footer>
 </div>
 
 <!-- Novo item (só pelo catálogo) -->
@@ -391,7 +406,7 @@ body.busy button:not(.loading){pointer-events:none;opacity:.55}
 <!-- Login (contas criadas pelo administrador no painel do Supabase) -->
 <div class="overlay" id="overlayLogin" style="z-index:150;background:var(--bg)">
   <form class="modal" id="loginForm">
-    <h2>Entrar no SISCOMAT</h2>
+    <h2>Entrar no BUComat</h2>
     <label for="lgEmail">E-mail</label>
     <input id="lgEmail" type="email" autocomplete="username" required>
     <label for="lgSenha">Senha</label>
@@ -414,8 +429,8 @@ const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&g
 
 // ---- Autenticação (Supabase Auth, sessão no localStorage) ----
 const AUTH="https://yjpqfukumgrowvxaumhu.supabase.co/auth/v1";
-let SESSAO=JSON.parse(localStorage.getItem("siscomat_sessao")||"null");
-function salvarSessao(s){ SESSAO=s; if(s) localStorage.setItem("siscomat_sessao",JSON.stringify(s)); else localStorage.removeItem("siscomat_sessao"); }
+let SESSAO=JSON.parse(localStorage.getItem("bucomat_sessao")||"null");
+function salvarSessao(s){ SESSAO=s; if(s) localStorage.setItem("bucomat_sessao",JSON.stringify(s)); else localStorage.removeItem("bucomat_sessao"); }
 async function authFetch(path,body){
   const res=await fetch(AUTH+path,{method:"POST",headers:{apikey:KEY,"Content-Type":"application/json"},body:JSON.stringify(body)});
   const data=await res.json().catch(()=>({}));
@@ -744,7 +759,7 @@ $("#expCsv").onclick=()=>{
   const csv="﻿"+linhas.map(l=>l.map(cell).join(";")).join("\r\n");
   const a=document.createElement("a");
   a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
-  a.download=`siscomat_${new Date().toISOString().slice(0,10)}.csv`;
+  a.download=`bucomat_${new Date().toISOString().slice(0,10)}.csv`;
   a.click(); URL.revokeObjectURL(a.href);
   toast(`CSV com ${gs.length} itens gerado`);
 };
@@ -754,7 +769,7 @@ $("#expPdf").onclick=()=>{
   const w=window.open("","_blank");
   if(!w){ toast("Libere pop-ups para gerar o PDF"); return; }
   w.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
-<title>Inventário SISCOMAT — ${hoje()}</title>
+<title>Inventário BUComat — ${hoje()}</title>
 <style>
   body{font:12px/1.5 -apple-system,"Segoe UI",Roboto,sans-serif;color:#1B2529;margin:28px}
   h1{font-size:18px;margin:0}
@@ -768,7 +783,7 @@ $("#expPdf").onclick=()=>{
   .c-nao_conferido{color:#888}
   @media print{ @page{margin:14mm} }
 </style></head><body>
-<h1>Inventário SISCOMAT</h1>
+<h1>Inventário BUComat</h1>
 <div class="sub">Gerado em ${hoje()} · ${gs.length} itens · ${gs.reduce((a,g)=>a+g.total,0)} unidades físicas${filtros?` · Filtros — ${esc(filtros)}`:" · Relatório completo"}</div>
 <table><thead><tr><th style="text-align:right">Qtde</th><th>Material</th><th>Patrimônios</th><th>Nº de Série</th><th>Localização</th><th>Unidade/Viatura</th><th>Conferido</th></tr></thead><tbody>
 ${gs.map(g=>`<tr><td class="q">${g.total}</td><td>${esc(g.material)}</td><td>${esc(g.idents.map(i=>i.patrimonio).filter(Boolean).join(", "))||"—"}</td><td>${esc(g.idents.map(i=>i.numero_serie).filter(Boolean).join(", "))||"—"}</td><td>${esc(g.localizacao)}</td><td>${esc(g.unidade)}</td><td class="c-${g.conferido}">${CONF_ICON[g.conferido]} ${CONF_TITLE[g.conferido]}</td></tr>`).join("")}
@@ -1370,7 +1385,7 @@ $("#audPdf").onclick=()=>{
   const w=window.open("","_blank");
   if(!w){ toast("Libere pop-ups para gerar o PDF"); return; }
   w.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
-<title>Auditoria SISCOMAT — ${hoje()}</title>
+<title>Auditoria BUComat — ${hoje()}</title>
 <style>
   body{font:11px/1.5 -apple-system,"Segoe UI",Roboto,sans-serif;color:#1B2529;margin:28px}
   h1{font-size:18px;margin:0}
@@ -1380,7 +1395,7 @@ $("#audPdf").onclick=()=>{
   td{border-bottom:1px solid #e2e2e2;padding:4px 6px;vertical-align:top}
   @media print{ @page{margin:12mm} }
 </style></head><body>
-<h1>Auditoria SISCOMAT</h1>
+<h1>Auditoria BUComat</h1>
 <div class="sub">Gerado em ${hoje()} · ${rs.length} registros</div>
 <table><thead><tr><th>Data/Hora</th><th>Usuário</th><th>Ação</th><th>Tabela</th><th>Registro</th><th>Detalhes</th></tr></thead><tbody>
 ${rs.map(r=>`<tr><td>${r._quando}</td><td>${esc(r.usuario||"—")}</td><td>${AUD_ACAO[r.acao]||r.acao}</td><td>${AUD_TABELA[r.tabela]||r.tabela}</td><td>${esc(r._registro)}</td><td>${r._detalhes}</td></tr>`).join("")}
