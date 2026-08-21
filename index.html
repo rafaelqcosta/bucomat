@@ -42,7 +42,15 @@ h1 small{display:block;font:600 12px/1.4 "Public Sans",sans-serif;letter-spacing
 .brand-buc{color:var(--accent);font-style:italic;letter-spacing:.01em}
 .brand-omat{color:var(--metal);font-style:italic;letter-spacing:.01em}
 .brand-sub{display:block;font:600 11px/1.4 "Public Sans",sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:4px}
-:root{--metal:#7A838A}
+:root{--metal:#7A838A;--brand:#B3110E}
+.brand-buc{color:var(--brand)}
+.brand h1 small{color:var(--brand)}
+.brand-logo{cursor:pointer}
+.logobox{position:relative;max-width:min(90vw,560px)}
+.logobox img{width:100%;display:block;border-radius:16px}
+.logobox .fechar{position:absolute;top:10px;right:10px;width:34px;height:34px;border:0;border-radius:50%;background:rgba(0,0,0,.65);color:#fff;font-size:16px;font-weight:700;cursor:pointer}
+.logobox .fechar:hover{background:var(--brand)}
+#overlayLogo{align-items:center}
 .stats{display:flex;gap:24px;margin-left:auto}
 .stat{text-align:right}
 .stat b{display:block;font:700 24px/1 Archivo,sans-serif;font-variant-numeric:tabular-nums}
@@ -417,6 +425,12 @@ body.busy button:not(.loading){pointer-events:none;opacity:.55}
     </div>
     <p class="hint" style="margin:12px 0 0">Acesso restrito. Contas são criadas pelo administrador.</p>
   </form>
+</div>
+<div class="overlay" id="overlayLogo">
+  <div class="logobox">
+    <button type="button" class="fechar" id="logoFechar" title="Fechar" aria-label="Fechar">✕</button>
+    <img src="logo-full.jpg" alt="Logo BUComat em alta qualidade">
+  </div>
 </div>
 <div id="toast"></div>
 
@@ -1413,6 +1427,11 @@ document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
   $("#pane-aud").hidden=t.id!=="tab-aud";
   if(t.id==="tab-aud"&&!AUD.length&&SESSAO) audCarregar(true).catch(fail);
 });
+
+// ---- Lightbox da logo ----
+document.querySelector(".brand-logo").onclick=()=>$("#overlayLogo").classList.add("open");
+$("#logoFechar").onclick=()=>$("#overlayLogo").classList.remove("open");
+$("#overlayLogo").addEventListener("click",e=>{ if(e.target===$("#overlayLogo")) $("#overlayLogo").classList.remove("open"); });
 
 // ---- Inicialização: exige login ----
 if(SESSAO){
