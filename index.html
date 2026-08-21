@@ -97,7 +97,9 @@ td.acts{width:1%;white-space:nowrap;text-align:right}
 .iconbtn:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 th.w-q{width:92px} th.w-pat{width:150px} th.w-ser{width:130px} th.w-loc{width:160px} th.w-un{width:130px} th.w-chk{width:84px} th.w-act{width:150px}
 .mcount{color:var(--ok);font-weight:700;font-variant-numeric:tabular-nums;text-align:right;min-width:40px;flex:none}
-.ltwrap{max-height:320px;overflow-y:auto;margin-top:10px;border:1px solid var(--line);border-radius:8px}
+.ltwrap{flex:1 1 auto;min-height:120px;overflow-y:auto;margin-top:10px;border:1px solid var(--line);border-radius:8px}
+.ltwrap td input.inv{border-color:var(--falta);outline:1px solid var(--falta)}
+#ltErro{color:var(--falta);font-size:12.5px;margin-top:8px}
 .ltwrap table{border:0}
 .ltwrap td input{width:100%;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:6px 8px;font:13px "IBM Plex Mono",monospace}
 .ltwrap td.n{width:1%;color:var(--muted);font:400 12px "IBM Plex Mono",monospace;text-align:right}
@@ -105,9 +107,10 @@ th.w-q{width:92px} th.w-pat{width:150px} th.w-ser{width:130px} th.w-loc{width:16
 .legend{display:flex;gap:14px;margin:10px 2px;font-size:13px;color:var(--muted);flex-wrap:wrap}
 footer{margin-top:28px;color:var(--muted);font-size:12.5px}
 /* modal */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;padding:6vh 16px;z-index:100;overflow-y:auto}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;padding:5vh 16px;z-index:100;overflow-y:auto}
 .overlay.open{display:flex}
-.modal{background:var(--surface);border:1px solid var(--line);border-radius:10px;width:100%;max-width:480px;padding:20px}
+.modal{background:var(--surface);border:1px solid var(--line);border-radius:10px;width:100%;max-width:480px;padding:20px;max-height:90vh;display:flex;flex-direction:column}
+.modal>*{flex:none}
 .modal h2{font:700 18px Archivo,sans-serif;margin:0 0 14px}
 .modal label{display:block;font:600 11.5px "Public Sans",sans-serif;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:12px 0 4px}
 .modal input,.modal select{width:100%;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:9px 12px;font:inherit}
@@ -292,6 +295,7 @@ footer{margin-top:28px;color:var(--muted);font-size:12.5px}
       <thead><tr><th style="text-align:right">#</th><th>Patrimônio</th><th>Nº de Série</th></tr></thead>
       <tbody id="ltBody"></tbody>
     </table></div>
+    <div id="ltErro" hidden></div>
     <p class="hint" style="margin:10px 0 0">Uma linha por unidade física. Preencha patrimônio e/ou nº de série; linhas em branco continuam sem identificação (a granel). Limpar uma linha já registrada remove a identificação daquela unidade.</p>
     <div class="actions">
       <button type="button" class="btn" id="ltCancelar">Cancelar</button>
@@ -671,29 +675,55 @@ function abrirLote(key){
       <td><input placeholder="—" aria-label="Nº de série ${n}"></td></tr>`),
   ];
   $("#ltBody").innerHTML=linhas.join("");
+  $("#ltErro").hidden=true;
   $("#overlayLote").classList.add("open");
 }
+// validação em tempo real: marca campos duplicados (no formulário ou já cadastrados) em vermelho
+function validarLoteCampos(){
+  const trs=[...$("#ltBody").querySelectorAll("tr")];
+  const rotulo={patrimonio:"Patrimônio",numero_serie:"Nº de série"};
+  const porValor={patrimonio:new Map(),numero_serie:new Map()};
+  const erros=[];
+  const campos=trs.flatMap(tr=>{
+    const id=tr.dataset.id?Number(tr.dataset.id):null;
+    const [ip,is]=tr.querySelectorAll("input");
+    return [{campo:"patrimonio",inp:ip,id},{campo:"numero_serie",inp:is,id}];
+  });
+  campos.forEach(c=>{ c.inp.classList.remove("inv"); c.inp.title="";
+    const v=c.inp.value.trim(); if(!v) return;
+    const k=norm(v);
+    (porValor[c.campo].get(k)||porValor[c.campo].set(k,[]).get(k)).push(c);
+  });
+  for(const campo of ["patrimonio","numero_serie"])
+    for(const [,cs] of porValor[campo])
+      if(cs.length>1) cs.forEach(c=>{
+        c.inp.classList.add("inv"); c.inp.title=`${rotulo[campo]} repetido no formulário`;
+        erros.push(`${rotulo[campo]} ${c.inp.value.trim()} repetido no formulário`);
+      });
+  campos.forEach(c=>{
+    const v=c.inp.value.trim(); if(!v) return;
+    const em=ITENS.find(i=>i[c.campo]&&norm(i[c.campo])===norm(v)&&i.id!==c.id);
+    if(em){ c.inp.classList.add("inv");
+      const msg=`${rotulo[c.campo]} ${v} já cadastrado: ${em.material} em ${em.unidade}`;
+      c.inp.title=msg; erros.push(msg); }
+  });
+  const el=$("#ltErro");
+  el.hidden=!erros.length;
+  el.textContent=[...new Set(erros)].slice(0,3).join(" · ");
+  return !erros.length;
+}
+$("#ltBody").addEventListener("input",validarLoteCampos);
 function fecharLote(){ $("#overlayLote").classList.remove("open"); loteKey=null; }
 $("#ltCancelar").onclick=fecharLote;
 $("#overlayLote").addEventListener("click",e=>{ if(e.target===$("#overlayLote")) fecharLote(); });
 $("#loteForm").addEventListener("submit",async e=>{
   e.preventDefault();
   const g=grupo(loteKey); if(!g) return;
+  if(!validarLoteCampos()){ toast("Corrija os campos destacados em vermelho"); return; }
   const editadas=[], removidas=[], novas=[];
-  const vistos={patrimonio:new Map(), numero_serie:new Map()};
-  const idsDoGrupo=new Set(g.ids);
-  // valida duplicidade dentro do formulário e contra o banco
   for(const tr of $("#ltBody").querySelectorAll("tr")){
     const [pat,serie]=[...tr.querySelectorAll("input")].map(i=>i.value.trim()||null);
     const id=tr.dataset.id?Number(tr.dataset.id):null;
-    for(const [campo,v] of [["patrimonio",pat],["numero_serie",serie]]){
-      if(!v) continue;
-      const rot=campo==="patrimonio"?"Patrimônio":"Nº de série";
-      if(vistos[campo].has(norm(v))){ toast(`${rot} ${v} repetido no formulário`); return; }
-      vistos[campo].set(norm(v),true);
-      const em=ITENS.find(i=>i[campo]&&norm(i[campo])===norm(v)&&i.id!==id);
-      if(em){ toast(`${rot} ${v} já cadastrado: ${em.material} em ${em.unidade}`); return; }
-    }
     if(id){
       const orig=ITENS.find(i=>i.id===id);
       if(!pat&&!serie) removidas.push(orig);
