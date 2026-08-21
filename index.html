@@ -29,7 +29,7 @@
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 "Public Sans",system-ui,sans-serif}
-.wrap{max-width:1160px;margin:0 auto;padding:28px 20px 64px}
+.wrap{max-width:1600px;margin:0 auto;padding:28px 28px 64px}
 header{display:flex;flex-wrap:wrap;align-items:end;gap:16px 28px;border-bottom:3px solid var(--accent);padding-bottom:18px;margin-bottom:20px}
 h1{font:800 clamp(24px,4vw,34px)/1.1 Archivo,sans-serif;margin:0;text-wrap:balance}
 h1 small{display:block;font:600 12px/1.4 "Public Sans",sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
@@ -70,6 +70,8 @@ button.btn.small{padding:4px 10px;font-size:12px}
 button.btn.danger{color:var(--falta)}
 button.btn:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+#pane-inv>.tablewrap>table{table-layout:fixed}
+#pane-inv td{overflow-wrap:break-word}
 .tablewrap{overflow-x:auto}
 th{font:600 11.5px "Public Sans",sans-serif;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);text-align:left;padding:10px 12px;border-bottom:2px solid var(--line)}
 td{padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
@@ -176,6 +178,7 @@ footer{margin-top:28px;color:var(--muted);font-size:12.5px}
   </div>
   <div class="legend">
     <span>Conferido: <b style="color:var(--ok)">✓</b> conferido · <b style="color:var(--falta)">✗</b> falta · <b>—</b> não conferido. O clique vale para todas as unidades do material naquela localização.</span>
+    <span>Patrimônios e nº de série são registrados pelo botão 🏷 na linha do item.</span>
   </div>
   <div class="tablewrap"><table>
     <thead><tr><th class="w-q">Qtde</th><th>Material</th><th class="w-pat">Patrimônio</th><th class="w-ser">Nº de Série</th><th class="w-loc">Localização</th><th class="w-un">Unidade/Viatura</th><th class="w-chk" style="text-align:center">Conferido</th><th class="w-act"></th></tr></thead>
@@ -318,7 +321,11 @@ async function api(path,opts={}){
   const txt=await res.text();
   return txt?JSON.parse(txt):null;
 }
-function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),2600); }
+function toast(msg){
+  const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._h);
+  const dur=Math.min(9000, 2000 + msg.length*55); // tempo proporcional ao texto
+  t._h=setTimeout(()=>t.classList.remove("show"),dur);
+}
 function fail(e){ console.error(e); toast("Erro: "+e.message); }
 const agora=()=>new Date().toISOString();
 
